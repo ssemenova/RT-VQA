@@ -1,3 +1,5 @@
+# Source from [TMLGA Github](https://github.com/crodriguezo/TMLGA)
+
 # Proposal-Free Temporal Moment Localization
 
 Code accompanying the paper [Proposal-free Temporal Moment Localization of a Natural-Language Query in Video using Guided Attention](https://arxiv.org/abs/1908.07236). 
