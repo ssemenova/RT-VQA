@@ -139,7 +139,7 @@ class Encoder(nn.Module):
         # visual info
         # step 1: position embedding
         seq_batch_size, seq_len, v_feat_dim = src_seq.size() # batch_size:128  steps:35  ctx_dim:2048
-        seq_mask = get_v_mask(seq_batch_size, seq_len).cuda() # batch_size x steps : position mask
+        seq_mask = get_v_mask(seq_batch_size, seq_len) # batch_size x steps : position mask
 
         pos_emb = self.position_enc(seq_mask) # batch_size x v_len x v_emb_dim
         # print('ok')
@@ -270,7 +270,7 @@ class Ques_Encoder(nn.Module):
         q_c_emb = self.char_emb(q_c) # batch_size x q_len x c_len x c_dim
         Q = self.emb(q_c_emb, q_w_emb, Lq) # batch_size x D x q_len
         Cq = self.emb_enc(Q, mask, 1, 1)
-        maskV = torch.ones(vid_enc.shape[0], vid_enc.shape[1]).cuda()
+        maskV = torch.ones(vid_enc.shape[0], vid_enc.shape[1])
         X = self.vqatt(vid_enc, Cq, maskV, mask)
         M0 = self.vq_resizer(X)
         out = M0.mean(-1)

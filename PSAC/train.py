@@ -56,16 +56,16 @@ def train(model, train_loader, eval_loader, num_epochs, output, max_len=35):
             q_w = torch.from_numpy(q_w.reshape(-1,q_w.shape[-1]))
             q_c = np.array(q_c)
             q_c = torch.from_numpy(q_c.reshape(-1, q_c.shape[-2], q_c.shape[-1]))
-            q_c = Variable(q_c.cuda())
+            q_c = Variable(q_c)
             v = np.array(v)
             v = np.tile(v, [1, model.num_choice]).reshape(-1,v.shape[-2], v.shape[-1])
-            v = Variable(torch.from_numpy(v).cuda())
-            q_w = Variable(q_w.cuda())
+            v = Variable(torch.from_numpy(v))
+            q_w = Variable(q_w)
             a = a.type(torch.LongTensor)
             if model.model_name=='Count':
-                a = Variable(a.cuda()).float()
+                a = Variable(a).float()
             else:
-                a = Variable(a.cuda())
+                a = Variable(a)
 
             pred = model(v, q_w, q_c, a)
             loss = loss_func(pred, a)

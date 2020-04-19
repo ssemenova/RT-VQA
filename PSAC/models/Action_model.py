@@ -48,11 +48,11 @@ class ActionModel(nn.Module):
             q_c = torch.from_numpy(q_c.reshape(-1, q_c.shape[-2], q_c.shape[-1]))
             v = np.array(v)
             v = np.tile(v, [1, self.num_choice]).reshape(-1, v.shape[-2], v.shape[-1])
-            v = Variable(torch.from_numpy(v).cuda())
-            q_w = Variable(q_w.cuda())
-            q_c = Variable(q_c.cuda())
+            v = Variable(torch.from_numpy(v))
+            q_w = Variable(q_w)
+            q_c = Variable(q_c)
             pred = self.forward(v, q_w, q_c, None)
-            batch_score = compute_score_with_logits(pred, a.cuda())
+            batch_score = compute_score_with_logits(pred, a)
             score += batch_score
             num_data += pred.size(0)
 
@@ -71,12 +71,12 @@ class ActionModel(nn.Module):
             q_c = torch.from_numpy(q_c.reshape(-1, q_c.shape[-2], q_c.shape[-1]))
             v = np.array(v)
             v = np.tile(v, [1, self.num_choice]).reshape(-1, v.shape[-2], v.shape[-1])
-            v = Variable(torch.from_numpy(v).cuda())
-            q_w = Variable(q_w.cuda())
-            q_c = Variable(q_c.cuda())
+            v = Variable(torch.from_numpy(v))
+            q_w = Variable(q_w)
+            q_c = Variable(q_c)
             pred = self.forward(v, q_w, q_c, None)
             # pred_label = pred.data.cpu().max(1)[1]
-            batch_score = compute_score_with_logits(pred, a.cuda())
+            batch_score = compute_score_with_logits(pred, a)
             prediction = torch.max(pred, 1)[1]
             score += batch_score
             num_data += pred.size(0)

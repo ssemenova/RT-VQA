@@ -56,10 +56,10 @@ if __name__ == '__main__':
     batch_size = args.batch_size
 
     model_name = args.task+'_model'
-    model = getattr(locals()[model_name], 'build_%s' % args.model)(args.task, args.vid_enc_layers, train_dset, args.num_hid, dictionary, args.glove_file_path).cuda()
+    model = getattr(locals()[model_name], 'build_%s' % args.model)(args.task, args.vid_enc_layers, train_dset, args.num_hid, dictionary, args.glove_file_path)
 
     print('========start train========')
-    model = model.cuda()
+    model = model
 
     train_loader = DataLoader(train_dset, batch_size, shuffle=True, num_workers=1)
     # val_loader = DataLoader(val_dset, batch_size, shuffle=True, num_workers=1)

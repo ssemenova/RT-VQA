@@ -36,14 +36,14 @@ class CountModel(nn.Module):
         score = 0
 
         for v, q_w, q_c, a,ques_eng, ans_eng, idx in iter(dataloader):
-            v = Variable(v).cuda()
-            q_w = Variable(q_w).cuda()
-            q_c = Variable(q_c).cuda()
+            v = Variable(v)
+            q_w = Variable(q_w)
+            q_c = Variable(q_c)
             logits = self.forward(v, q_w, q_c , None)
             logits = logits.data.cpu().numpy().squeeze()
             pred = np.clip(logits, a_min=1, a_max=10)
             pred = np.round(pred)
-            batch_score = compute_score_with_logits(pred, a.cuda())
+            batch_score = compute_score_with_logits(pred, a)
             score += batch_score
 
         score = float(score) / len(dataloader.dataset)
@@ -53,14 +53,14 @@ class CountModel(nn.Module):
         score = 0
         j = 0
         for idxs, v, q_w, q_c, a in iter(dataloader):
-            v = Variable(v).cuda()
-            q_w = Variable(q_w).cuda()
-            q_c = Variable(q_c).cuda()
+            v = Variable(v)
+            q_w = Variable(q_w)
+            q_c = Variable(q_c)
             logits = self.forward(v, q_w, q_c , None)
             logits = logits.data.cpu().numpy().squeeze()
             pred = np.clip(logits, a_min=1, a_max=10)
             pred = np.round(pred)
-            batch_score = compute_score_with_logits(pred, a.cuda())
+            batch_score = compute_score_with_logits(pred, a)
             score += batch_score
             print('index:', j)
             # print('gif name:', dataset.entries[j]['gif_name'])
@@ -77,9 +77,9 @@ class CountModel(nn.Module):
         j = 0
         results = []
         for v, q_w, q_c, a, ques_eng, ans_eng, idx in iter(dataloader):
-            v = Variable(v).cuda()
-            q_w = Variable(q_w).cuda()
-            q_c = Variable(q_c).cuda()
+            v = Variable(v)
+            q_w = Variable(q_w)
+            q_c = Variable(q_c)
             logits = self.forward(v, q_w, q_c, None)
             pred = logits.data.cpu().numpy().squeeze()
             # pred = pred.data.cpu().numpy().squeeze()

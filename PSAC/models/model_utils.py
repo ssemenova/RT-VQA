@@ -296,7 +296,7 @@ def PosEncoder(x, min_timescale=1.0, max_timescale=1.0e4):
     length = x.size()[1]
     channels = x.size()[2]
     signal = get_timing_signal(length, channels, min_timescale, max_timescale)
-    return (x + signal.cuda()).transpose(1, 2) # batch_size x D x len
+    return (x + signal).transpose(1, 2) # batch_size x D x len
 
 class DepthwiseSeparableConv(nn.Module):
     def __init__(self, in_ch, out_ch, k, bias=True):

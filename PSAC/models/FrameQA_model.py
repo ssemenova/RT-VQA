@@ -40,11 +40,11 @@ class FrameQAModel(nn.Module):
         score = 0
         num_data = 0
         for v, q_w, q_c, a in iter(dataloader):
-            v = Variable(v).cuda()
-            q_w = Variable(q_w).cuda()
-            q_c = Variable(q_c).cuda()
+            v = Variable(v)
+            q_w = Variable(q_w)
+            q_c = Variable(q_c)
             pred = self.forward(v, q_w, q_c, None)
-            batch_score = compute_score_with_logits(pred, a.cuda())
+            batch_score = compute_score_with_logits(pred, a)
             score += batch_score
             num_data += pred.size(0)
 
@@ -58,12 +58,12 @@ class FrameQAModel(nn.Module):
         j = 0
         results = []
         for v, q_w, q_c, a, ques_eng, ans_eng, idx in iter(dataloader):
-            v = Variable(v).cuda()
-            q_w = Variable(q_w).cuda()
-            q_c = Variable(q_c).cuda()
+            v = Variable(v)
+            q_w = Variable(q_w)
+            q_c = Variable(q_c)
             pred = self.forward(v, q_w, q_c, None)
             # pred_label = pred.data.cpu().max(1)[1]
-            batch_score = compute_score_with_logits(pred, a.cuda())
+            batch_score = compute_score_with_logits(pred, a)
             prediction = torch.max(pred, 1)[1]
             score += batch_score
             num_data += pred.size(0)
