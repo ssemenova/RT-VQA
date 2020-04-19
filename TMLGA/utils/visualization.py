@@ -19,7 +19,6 @@ class Visualization(object):
         self.cfg = cfg
         self.s_samples = np.random.randint(dataset_size, size=4)
         self.s_samples = np.insert(self.s_samples,0, 100)
-
         for s in self.s_samples:
             self.individual_loss[str(s)] = []
             mkdir("{}/{}".format(self.vis_dir, str(s)))
@@ -27,6 +26,8 @@ class Visualization(object):
             self.state = "training"
         else:
             self.state = "testing"
+
+        print ("done with initialization")
 
     def tIoU(self, start, end, pred_start, pred_end):
         tt1 = np.maximum(start, pred_start)

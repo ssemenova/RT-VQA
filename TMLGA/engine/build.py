@@ -18,7 +18,7 @@ def trainer(cfg):
     dataloader_test, dataset_size_test   = data.make_dataloader(cfg, is_train=False)
 
     model = modeling.build(cfg)
-    model.cuda()
+    model
     #model = torch.load("/home/crodriguezo/projects/phd/moment-localization-with-NLP/mlnlp_lastversion/checkpoints/anet_config7/model_epoch_80")
     optimizer = solver.make_optimizer(cfg, model)
 
@@ -37,16 +37,16 @@ def trainer(cfg):
         for iteration, batch in enumerate(dataloader_train):
             index     = batch[0]
 
-            videoFeat = batch[1].cuda()
-            videoFeat_lengths = batch[2].cuda()
+            videoFeat = batch[1]
+            videoFeat_lengths = batch[2]
 
-            tokens         = batch[3].cuda()
-            tokens_lengths = batch[4].cuda()
+            tokens         = batch[3]
+            tokens_lengths = batch[4]
 
-            start    = batch[5].cuda()
-            end      = batch[6].cuda()
+            start    = batch[5]
+            end      = batch[6]
 
-            localiz  = batch[7].cuda()
+            localiz  = batch[7]
             localiz_lengths = batch[8]
             time_starts = batch[9]
             time_ends = batch[10]
@@ -97,15 +97,15 @@ def trainer(cfg):
         for iteration, batch in enumerate(dataloader_test):
             index     = batch[0]
 
-            videoFeat = batch[1].cuda()
-            videoFeat_lengths = batch[2].cuda()
+            videoFeat = batch[1]
+            videoFeat_lengths = batch[2]
 
-            tokens         = batch[3].cuda()
-            tokens_lengths = batch[4].cuda()
+            tokens         = batch[3]
+            tokens_lengths = batch[4]
 
-            start    = batch[5].cuda()
-            end      = batch[6].cuda()
-            localiz  = batch[7].cuda()
+            start    = batch[5]
+            end      = batch[6]
+            localiz  = batch[7]
             localiz_lengths = batch[8]
             time_starts = batch[9]
             time_ends = batch[10]
@@ -148,6 +148,7 @@ def trainer(cfg):
 
 
 def tester(cfg):
+    ## SOFIYA: Entry point here
     print('testing')
     dataloader_test, dataset_size_test   = data.make_dataloader(cfg, is_train=False)
 
@@ -158,8 +159,7 @@ def tester(cfg):
     else:
         load_path = cfg.TEST.MODEL
 
-    model = torch.load(load_path)
-    model.cuda()
+    model = torch.load(load_path,map_location=torch.device('cpu'))
 
     vis_test  = Visualization(cfg, dataset_size_test, is_train=False)
 
@@ -172,18 +172,19 @@ def tester(cfg):
     model.eval()
     epoch = 1
     for iteration, batch in enumerate(dataloader_test):
+        print(total_iterations_val)
         index     = batch[0]
 
-        videoFeat = batch[1].cuda()
-        videoFeat_lengths = batch[2].cuda()
+        videoFeat = batch[1]
+        videoFeat_lengths = batch[2]
 
-        tokens         = batch[3].cuda()
-        tokens_lengths = batch[4].cuda()
+        tokens         = batch[3]
+        tokens_lengths = batch[4]
 
-        start    = batch[5].cuda()
-        end      = batch[6].cuda()
+        start    = batch[5]
+        end      = batch[6]
         
-        localiz  = batch[7].cuda()
+        localiz  = batch[7]
         localiz_lengths = batch[8]
         
         time_starts = batch[9]

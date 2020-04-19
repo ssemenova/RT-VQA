@@ -51,8 +51,8 @@ def pack_rnn_input(embedded_sequence_batch, sequence_lengths):
     idx_unsort = torch.from_numpy(idx_unsort)
 
     if embedded_sequence_batch.is_cuda:
-        idx_sort = idx_sort.cuda()
-        idx_unsort = idx_unsort.cuda()
+        idx_sort = idx_sort
+        idx_unsort = idx_unsort
 
     embedded_sequence_batch = embedded_sequence_batch.index_select(0, idx_sort)
 
@@ -116,7 +116,7 @@ def gather_last(batch_hidden_states, batch_lengths, bidirectional=True):
         bw_batch_lengths = torch.zeros(*fw_batch_lengths.size()).long()
 
         if batch_hidden_states.is_cuda:
-            bw_batch_lengths = bw_batch_lengths.cuda()
+            bw_batch_lengths = bw_batch_lengths
 
         # we want 2 chunks in the last dimension
         out_fw, out_bw = torch.chunk(batch_hidden_states, 2, 2)
