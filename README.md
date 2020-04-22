@@ -30,7 +30,8 @@
 4. Delete problematic videos with IDs: 
   - 451
   - 745
-  TODO: Figure out how to deal with these
+  - 1106
+  (TODO: Figure out how to deal with these)
 5. Pre-process the videos by running:
   ~~~
   python preprocess_msvdqa.py PSAC/MSVD-QA
