@@ -1,11 +1,10 @@
+import argparse
 import cv2
 import threading
 
-import dataset
-
-import Chunk
-import Cache
-
+from chunk import Chunk
+from cache import Cache
+from utils import ChunkC3DExtractor, ChunkVGGExtractor, StoppableThread
 
 running_threads = {}
 
@@ -49,9 +48,9 @@ def process_video(video_name, chunk_size, cache, c3d_extractor, vgg_extractor):
             pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
 
             if frame_count == chunk_size:
-                running_threads.update{
+                running_threads.update({
                     chunk_count: current_chunk.commit()
-                }
+                })
                 current_chunk = Chunk(
                     cache, chunk_count, c3d_extracor, vgg_extractor
                 )
@@ -81,7 +80,7 @@ def kill_old_threads(cache):
         ids_to_kill = [(k, v) for k, v in running_threads.items() if k < cache.oldest_id]
         for id in ids_to_kill:
             running_threads.get(id).stop()
-            
+
         time.sleep(10)
 
 def main():
@@ -92,7 +91,6 @@ def main():
         args.cache_size,
         args.evict_mod,
         args.use_ram,
-        args.chunk_size
     )
     c3d_extractor = ChunkC3DExtractor(args.chunk_size)
     vgg_extractor = ChunkVGGExtractor(args.chunk_size)
@@ -105,11 +103,13 @@ def main():
         ))
     )
     ask_questions_thread = StoppableThread(
-      threading.Thread(target=ask_questions, args=(,))
+      threading.Thread(target=ask_questions, args=())
     )
     kill_old_threads_thread = StoppableThread(
         threading.Thread(target=kill_old_threads, args=(cache,))
     )
+
+    print("Threads started.")
 
 
 main()

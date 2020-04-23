@@ -36,7 +36,7 @@ class Cache(object):
 
     if self.use_ram:
       self.db.update({
-        id=Chunk()
+        "id": Chunk()
       })
     else:
       cursor = self.conn.cursor()
@@ -60,7 +60,7 @@ class Cache(object):
       current_id = oldest_allowed_id + 1
 
       while keep_evicting:
-        if not self.db.pop(current_id[, None]):
+        if not self.db.pop(current_id, None):
           keep_evicting = False
         else:
           current_id += 1

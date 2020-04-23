@@ -1,4 +1,6 @@
 import inspect
+import threading
+import tf
 
 class ChunkVGGExtractor(object):
     def __init__(self, frame_num):
