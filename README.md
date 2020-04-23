@@ -33,6 +33,9 @@
   - 1106
   - 1120
   - 1258
+  - 1357
+  - 1475
+  - 1595
   (TODO: Figure out how to deal with these)
 5. Pre-process the videos by running:
   ~~~
