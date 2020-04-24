@@ -9,14 +9,12 @@ from VideoQA.util.vgg16 import Vgg16
 
 
 class ChunkVGGExtractor(object):
-    def __init__(self, frame_num):
+    def __init__(self, frame_num, sess):
         self.frame_num = frame_num
         self.inputs = tf.placeholder(tf.float32, [self.frame_num, 224, 224, 3])
         self.vgg16 = Vgg16()
         self.vgg16.build(self.inputs)
-
-    def begin_session(sess):
-      self.sess = sess
+        self.sess = sess
 
     def _select_frames(self, path):
         """Select representative frames for video.
@@ -57,21 +55,19 @@ class ChunkVGGExtractor(object):
 
 
 class ChunkC3DExtractor(object):
-    def __init__(self, clip_num):
+    def __init__(self, clip_num, sess):
         self.clip_num = clip_num
         self.inputs = tf.placeholder(
             tf.float32, [self.clip_num, 16, 112, 112, 3])
         _, self.c3d_features = c3d(self.inputs, 1, clip_num)
-        self.saver = tf.train.Saver()
+        saver = tf.train.Saver()
         path = inspect.getfile(ChunkC3DExtractor)
-        self.path = os.path.abspath(os.path.join(path, os.pardir, "VideoQA/util"))
-        self.mean = np.load(os.path.join(self.path, 'crop_mean.npy'))
-    
-    def begin_session(self,sess):
-      self.saver.restore(sess, os.path.join(
-        self.path, 'sports1m_finetuning_ucf101.model'))
-      self.sess = sess
-
+        path = os.path.abspath(os.path.join(path, os.pardir, "VideoQA/util"))
+        saver.restore(sess, os.path.join(
+            v, 'sports1m_finetuning_ucf101.model'))
+        self.mean = np.load(os.path.join(path, 'crop_mean.npy'))
+        self.sess = sess
+        
     def _select_clips(self, path):
         """Select self.batch_size clips for video. Each clip has 16 frames.
 

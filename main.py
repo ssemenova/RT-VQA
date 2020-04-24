@@ -5,7 +5,7 @@ import threading
 
 from chunk import Chunk
 from cache import Cache
-from utils import ChunkC3DExtractor, ChunkVGGExtractor, StoppableThread
+from utils import StoppableThread
 
 running_threads = {}
 
@@ -28,7 +28,7 @@ def parse_args():
     return args    
 
 
-def process_video(video_name, chunk_size, cache, c3d_extractor, vgg_extractor):
+def process_video(video_name, chunk_size, cache):
     # TODO: LATER-- replace this with something more real-time
     # and not frame-by-frame
     cap = cv2.VideoCapture(video_name)
@@ -55,7 +55,7 @@ def process_video(video_name, chunk_size, cache, c3d_extractor, vgg_extractor):
                     chunk_count: current_chunk.commit()
                 })
                 current_chunk = Chunk(
-                    cache, chunk_count, c3d_extracor, vgg_extractor
+                    cache, chunk_count, chunk_size
                 )
                 chunk_count += 1
             else:
@@ -97,13 +97,11 @@ def main():
         args.evict_mod,
         args.use_ram,
     )
-    c3d_extractor = ChunkC3DExtractor(args.chunk_size)
-    vgg_extractor = ChunkVGGExtractor(args.chunk_size)
     
     # Run threads
     process_video_thread = threading.Thread(
       target=process_video, args=(
-          args.video_name, args.chunk_size, cache, c3d_extractor, vgg_extractor
+          args.video_name, args.chunk_size, cache
         )
     )
     ask_questions_thread = threading.Thread(
