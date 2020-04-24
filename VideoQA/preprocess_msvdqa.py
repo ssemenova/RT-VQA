@@ -11,6 +11,7 @@ from util.preprocess import VideoVGGExtractor
 from util.preprocess import VideoC3DExtractor
 from util.preprocess import prune_embedding
 
+blacklist = [451, 745, 1106, 1120, 1258, 1357, 1475, 1595]
 
 def extract_vgg(video_directory):
     """Extract VGG features."""
@@ -22,12 +23,13 @@ def extract_vgg(video_directory):
 
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
         extractor = VideoVGGExtractor(20, sess)
-        for i in range(746, 1971):
-            video_path = os.path.join(
-                video_directory, 'YouTubeClipsvid' + str(i) + '.avi')
-            print('[VGG]', video_path)
-            vgg_features.append(extractor.extract(video_path))
-            # print(vgg_features[-1])
+        for i in range(1, 1971):
+            if i not in blacklist:
+                video_path = os.path.join(
+                    video_directory, 'YouTubeClipsvid' + str(i) + '.avi')
+                print('[VGG]', video_path)
+                vgg_features.append(extractor.extract(video_path))
+                # print(vgg_features[-1])
     return vgg_features
 
 
@@ -41,12 +43,13 @@ def extract_c3d(video_directory):
 
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
         extractor = VideoC3DExtractor(20, sess)
-        for i in range(746, 1971):
-            video_path = os.path.join(
-                video_directory, 'vid' + str(i) + '.avi')
-            print('[C3D]', video_path)
-            c3d_features.append(extractor.extract(video_path))
-            # print(c3d_features[-1])
+        for i in range(1, 1971):
+            if i not in blacklist:
+                video_path = os.path.join(
+                    video_directory, 'YouTubeClipsvid' + str(i) + '.avi')
+                print('[C3D]', video_path)
+                c3d_features.append(extractor.extract(video_path))
+                # print(c3d_features[-1])
     return c3d_features
 
 
@@ -54,8 +57,8 @@ def extract_video_feature(video_directory, feature_path):
     """Extract video features(vgg, c3d) and store in hdf5 file."""
     h5file = tables.open_file(
         feature_path, 'a', 'Extracted video features of the MSVD-QA dataset.')
-    vgg_features = extract_vgg(video_directory)
-    h5file.create_array('/', 'vgg', vgg_features, 'vgg16 feature')
+    #vgg_features = extract_vgg(video_directory)
+    #h5file.create_array('/', 'vgg', vgg_features, 'vgg16 feature')
     c3d_features = extract_c3d(video_directory)
     h5file.create_array('/', 'c3d', c3d_features, 'c3d feature')
     h5file.close()

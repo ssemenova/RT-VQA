@@ -5,7 +5,7 @@ import tensorflow as tf
 
 class Chunk(object):
 
-  def __init__(self, cache, id, c3d_extractor):
+  def __init__(self, cache, id, c3d_extractor, vgg_extractor):
     self.frames = []
     self.cache = cache
 
