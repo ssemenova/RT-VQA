@@ -25,11 +25,11 @@ class Chunk(object):
     sess_config.gpu_options.visible_device_list = '0'
 
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
-        c3d_extractor.begin_session()
+        self.c3d_extractor.begin_session(sess)
         self.c3d_features = c3d_extractor.extract(video_path)
 
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
-        vgg_extractor.begin_session()
+        self.vgg_extractor.begin_session(sess)
         self.vgg_features = vgg_extractor.extract(video_path)
 
     cache.insert(self)

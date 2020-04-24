@@ -62,14 +62,14 @@ class ChunkC3DExtractor(object):
         self.inputs = tf.placeholder(
             tf.float32, [self.clip_num, 16, 112, 112, 3])
         _, self.c3d_features = c3d(self.inputs, 1, clip_num)
-        saver = tf.train.Saver()
+        self.saver = tf.train.Saver()
         path = inspect.getfile(ChunkC3DExtractor)
-        path = os.path.abspath(os.path.join(path, os.pardir, "VideoQA/util"))
-        self.mean = np.load(os.path.join(path, 'crop_mean.npy'))
-
-    def begin_session(sess):
-      saver.restore(sess, os.path.join(
-        path, 'sports1m_finetuning_ucf101.model'))
+        self.path = os.path.abspath(os.path.join(path, os.pardir, "VideoQA/util"))
+        self.mean = np.load(os.path.join(self.path, 'crop_mean.npy'))
+    
+    def begin_session(self,sess):
+      self.saver.restore(sess, os.path.join(
+        self.path, 'sports1m_finetuning_ucf101.model'))
       self.sess = sess
 
     def _select_clips(self, path):
