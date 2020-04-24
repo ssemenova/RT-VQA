@@ -16,10 +16,10 @@ class Chunk(object):
     self.c3d_extractor = c3d_extractor
     self.vgg_extractor = vgg_extractor
 
-  def add_frame(frame, frame_count):
+  def add_frame(self, frame, frame_count):
     pass
 
-  def commit():
+  def commit(self):
     sess_config = tf.ConfigProto()
     sess_config.gpu_options.allow_growth = True
     sess_config.gpu_options.visible_device_list = '0'

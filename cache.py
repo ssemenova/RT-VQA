@@ -17,10 +17,10 @@ class Cache(object):
       cursor = self.conn.cursor()    
       cursor.execute("create table videochunks(id, vgg, c3d)")
   
-  def _connect():
+  def _connect(self):
     return sqlite3.connect(db_name + '.db')
 
-  def get(id):
+  def get(self, id):
     if self.use_ram:
       chunk = self.db.get(id)
       return chunk.vgg, chunk.c3d
@@ -31,7 +31,7 @@ class Cache(object):
       results = cursor.fetchone()
       return results[1], results[2]
 
-  def insert(id, vgg, c3d):
+  def insert(self, id, vgg, c3d):
     # TODO: is self a valid way to insert vgg and c3d data?
 
     if self.use_ram:
@@ -54,7 +54,7 @@ class Cache(object):
       _evict(oldest_allowed_id)
       self.oldest_id = oldest_allowed_id
 
-  def _evict(oldest_allowed_id):
+  def _evict(self, oldest_allowed_id):
     if self.use_ram:
       keep_evicting = True
       current_id = oldest_allowed_id + 1
@@ -69,7 +69,5 @@ class Cache(object):
       t = (oldest_allowed_id,)
       cursor.execute('DELETE FROM videochunks WHERE id<', t)
       self.conn.commit()
-
-      return results[1], results[2]
 
   

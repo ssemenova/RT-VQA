@@ -75,6 +75,7 @@ def ask_questions():
     # TODO: write question-asking code here when ready
     pass
 
+
 def kill_old_threads(cache):
     while True:
         ids_to_kill = [(k, v) for k, v in running_threads.items() if k < cache.oldest_id]
@@ -82,6 +83,7 @@ def kill_old_threads(cache):
             running_threads.get(id).stop()
 
         time.sleep(10)
+
 
 def main():
     args = parse_args()
@@ -98,12 +100,12 @@ def main():
 
     # Run threads
     process_video_thread = StoppableThread(
-      threading.Thread(target=process_video, args=(
-          args.video_name, args.chunk_size, cache, c3d_extractor, vgg_extractor
+    threading.Thread(target=process_video, args=(
+        args.video_name, args.chunk_size, cache, c3d_extractor, vgg_extractor
         ))
     )
     ask_questions_thread = StoppableThread(
-      threading.Thread(target=ask_questions, args=())
+    threading.Thread(target=ask_questions, args=())
     )
     kill_old_threads_thread = StoppableThread(
         threading.Thread(target=kill_old_threads, args=(cache,))
