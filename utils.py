@@ -63,9 +63,7 @@ class ChunkC3DExtractor(object):
         _, self.c3d_features = c3d(self.inputs, 1, clip_num)
         saver = tf.train.Saver()
         path = inspect.getfile(ChunkC3DExtractor)
-        print(path)
         path = os.path.abspath(os.path.join(path, os.pardir, "VideoQA/util"))
-        print(path)
         self.mean = np.load(os.path.join(path, 'crop_mean.npy'))
 
     def begin_session(sess):
