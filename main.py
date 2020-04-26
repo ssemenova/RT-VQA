@@ -77,9 +77,10 @@ def process_video(
                     chunk_count: current_chunk.commit()
                 })
                 current_chunk = Chunk(
-                    cache, chunk_count, chunk_size, frames_per_clip
+                    cache, chunk_count, chunk_size, frames_per_clip_c3d, clip_num_c3d
                 )
                 chunk_count += 1
+                frame_count = 0
             else:
                 current_chunk.add_frame(frame, frame_count)
 

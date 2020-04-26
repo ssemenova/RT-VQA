@@ -31,39 +31,39 @@ class Cache(object):
       results = cursor.fetchone()
       return results[1], results[2]
 
-  def insert(self, id, vgg, c3d):
+  def insert(self, chunk):
     # TODO: is self a valid way to insert vgg and c3d data?
 
     if self.use_ram:
       self.db.update({
-        "id": Chunk()
+          chunk.id: chunk
       })
     else:
       cursor = self.conn.cursor()
       cursor.execute(
         "INSERT INTO videochunks VALUES(" +
-        "'" + id + "', '" + vgg + "', '" + c3d + "'"
+        "'" + chunk.id + "', '" + chunk.vgg_features + "', '" + chunk.c3d_features + "'"
         + ")"
       )
       self.conn.commit()
 
     # Loosely evict from the cache every [evict_mod] chunks
-    oldest_allowed_id = id - cache_size
-    should_evict = oldest_allowed_id % evict_mod == 0
+    oldest_allowed_id = max(0, chunk.id - self.cache_size)
+    should_evict = oldest_allowed_id % self.evict_mod == 0
     if should_evict:
-      _evict(oldest_allowed_id)
+      self._evict(oldest_allowed_id)
       self.oldest_id = oldest_allowed_id
 
   def _evict(self, oldest_allowed_id):
     if self.use_ram:
       keep_evicting = True
-      current_id = oldest_allowed_id + 1
+      current_id = oldest_allowed_id - 1
 
       while keep_evicting:
         if not self.db.pop(current_id, None):
           keep_evicting = False
         else:
-          current_id += 1
+          current_id -= 1
     else:
       cursor = self.conn.cursor()
       t = (oldest_allowed_id,)

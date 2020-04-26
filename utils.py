@@ -3,7 +3,7 @@ import numpy as np
 import os
 import threading
 import tensorflow as tf
-
+from PIL import Image
 from VideoQA.util.c3d import c3d
 from VideoQA.util.vgg16 import Vgg16
 
@@ -67,6 +67,8 @@ class ChunkC3DExtractor(object):
         self.frames_per_clip = frames_per_clip
         
     def _create_clips(self, frames):
+        clips = list()
+
         for i in np.linspace(0, self.video_size, self.clip_num + 2)[1:self.clip_num + 1]:
             clip_start = int(i) - int(self.frames_per_clip/2)
             clip_end = int(i) + int(self.frames_per_clip/2) - 1
@@ -79,14 +81,14 @@ class ChunkC3DExtractor(object):
 
             new_clip = []
             for j in range(self.frames_per_clip):
-                frame_data = frames[clip_start + j]
-                img = Image.fromarray(frame_data)
-                img = frames[j]
+                img = frames[clip_start + j]
                 img = img.resize((112, 112), Image.BILINEAR)
                 frame_data = np.array(img) * 1.0
                 frame_data -= self.mean[j]
                 new_clip.append(frame_data)
             clips.append(new_clip)
+
+        return clips
 
     def extract(self, frames):
         """Get 4096-dim activation as feature for video.

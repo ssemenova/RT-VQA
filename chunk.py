@@ -18,8 +18,6 @@ class Chunk(object):
     self.frames_per_clip = frames_per_clip
     self.clip_num = clip_num
 
-    self.last_c3d_frame_num = 0
-
     # Computed vgg and c3d features 
     self.vgg_features = list()
     self.c3d_features = list()
@@ -28,7 +26,7 @@ class Chunk(object):
     self.image_frames = list()
 
   def add_frame(self, frame, frame_count):
-    image_frames.append(Image.fromarray(frame))
+    self.image_frames.append(Image.fromarray(frame))
 
   def commit(self):
     sess_config = tf.ConfigProto()
@@ -39,13 +37,13 @@ class Chunk(object):
       self.c3d_extractor = ChunkC3DExtractor(
         self.clip_num, sess, self.frames_per_clip, self.chunk_size
       )
-      self.c3d_features = self.c3d_extractor.extract(self)
+      self.c3d_features = self.c3d_extractor.extract(self.image_frames)
 
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
-      self.vgg_extractor = ChunkVGGExtractor(self.clip_num, sess, frames_per_clip_c3d)
-      self.vgg_features = self.vgg_extractor.extract(video_path)
+      self.vgg_extractor = ChunkVGGExtractor(self.clip_num, sess, self.chunk_size)
+      self.vgg_features = self.vgg_extractor.extract(self.image_frames)
 
-    cache.insert(self)
+    self.cache.insert(self)
 
-    del image_frames
+    del self.image_frames
     gc.collect()
