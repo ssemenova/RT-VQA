@@ -63,11 +63,11 @@ class ChunkC3DExtractor(object):
         path = inspect.getfile(ChunkC3DExtractor)
         path = os.path.abspath(os.path.join(path, os.pardir, "VideoQA/util"))
         saver.restore(sess, os.path.join(
-            v, 'sports1m_finetuning_ucf101.model'))
+            path, 'sports1m_finetuning_ucf101.model'))
         self.mean = np.load(os.path.join(path, 'crop_mean.npy'))
         self.sess = sess
         
-    def _select_clips(self, path):
+    def _select_clips(self, chunk):
         """Select self.batch_size clips for video. Each clip has [frames_per_clip] frames.
 
         Args:
@@ -75,7 +75,9 @@ class ChunkC3DExtractor(object):
         Returns:
             clips: list of clips.
         """
+        path = "bla"
         clips = list()
+        import pdb; pdb.set_trace()
         # video_info = skvideo.io.ffprobe(path)
         video_data = skvideo.io.vread(path)
         total_frames = video_data.shape[0]

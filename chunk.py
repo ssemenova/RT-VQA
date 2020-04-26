@@ -25,8 +25,7 @@ class Chunk(object):
     self.image_frames_for_vgg = list()
 
   def add_frame(self, frame, frame_count):
-    vgg_fram
-
+    pass
   def commit(self):
     sess_config = tf.ConfigProto()
     sess_config.gpu_options.allow_growth = True
@@ -34,10 +33,10 @@ class Chunk(object):
 
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
         self.c3d_extractor = ChunkC3DExtractor(self.chunk_size, sess, self.frames_per_clip)
-        self.c3d_features = c3d_extractor.extract(video_path)
+        self.c3d_features = self.c3d_extractor.extract(self)
 
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
         self.vgg_extractor = ChunkVGGExtractor(self.chunk_size, sess, frames_per_clip_c3d)
-        self.vgg_features = vgg_extractor.extract(video_path)
+        self.vgg_features = self.vgg_extractor.extract(video_path)
 
     cache.insert(self)

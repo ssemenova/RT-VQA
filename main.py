@@ -43,7 +43,7 @@ def process_video(video_name, chunk_size, cache, frames_per_clip):
     chunk_count = 0
     frame_count = 0
     current_chunk = Chunk(
-        cache, chunk_count, c3d_extractor, vgg_extractor
+        cache, chunk_count, chunk_size, frames_per_clip
     )
 
     print("process video thread loop")
@@ -104,7 +104,7 @@ def main():
     # Run threads
     process_video_thread = threading.Thread(
       target=process_video, args=(
-          args.video_name, args.chunk_size, cache, args.frames_per_clip
+          args.video_name, args.chunk_size, cache, args.frames_per_clip_c3d
         )
     )
     ask_questions_thread = threading.Thread(
