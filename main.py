@@ -18,7 +18,10 @@ def parse_args():
     parser.add_argument('--cache_size', type=int, default='100') # in terms of chunks
     parser.add_argument('--chunk_size', type=int, default='10') # in terms of frames
     parser.add_argument('--evict_mod', type=int, default='10') # how often to evict (in terms of chunks)
-    parser.add_argument('--use_ram', type=bool, default='True') # use RAM for cache
+    parser.add_argument('--use_ram', type=bool, default='True')  # use RAM for cache
+    
+    # frames per clip for c3d feature extraction
+    parser.add_argument('--frames_per_clip_c3d', type=int, default='16')
 
     # Not necessary?
     parser.add_argument('--database_user', type=str, default='vqadbuser')
@@ -28,7 +31,7 @@ def parse_args():
     return args    
 
 
-def process_video(video_name, chunk_size, cache):
+def process_video(video_name, chunk_size, cache, frames_per_clip):
     # TODO: LATER-- replace this with something more real-time
     # and not frame-by-frame
     cap = cv2.VideoCapture(video_name)
@@ -55,7 +58,7 @@ def process_video(video_name, chunk_size, cache):
                     chunk_count: current_chunk.commit()
                 })
                 current_chunk = Chunk(
-                    cache, chunk_count, chunk_size
+                    cache, chunk_count, chunk_size, frames_per_clip
                 )
                 chunk_count += 1
             else:
@@ -101,7 +104,7 @@ def main():
     # Run threads
     process_video_thread = threading.Thread(
       target=process_video, args=(
-          args.video_name, args.chunk_size, cache
+          args.video_name, args.chunk_size, cache, args.frames_per_clip
         )
     )
     ask_questions_thread = threading.Thread(

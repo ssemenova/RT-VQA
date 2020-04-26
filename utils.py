@@ -27,7 +27,6 @@ class ChunkVGGExtractor(object):
             frames: list of frames.
         """
         frames = list()
-        # video_info = skvideo.io.ffprobe(path)
         video_data = skvideo.io.vread(path)
         total_frames = video_data.shape[0]
         # Ignore some frame at begin and end.
@@ -39,11 +38,11 @@ class ChunkVGGExtractor(object):
             frames.append(frame_data)
         return frames
 
-    def extract(self, path):
+    def extract(self, frames):
         """Get VGG fc7 activations as representation for video.
 
         Args:
-            path: Path of video.
+            frames: np array of video frames.
         Returns:
             feature: [batch_size, 4096]
         """
@@ -55,10 +54,10 @@ class ChunkVGGExtractor(object):
 
 
 class ChunkC3DExtractor(object):
-    def __init__(self, clip_num, sess):
+    def __init__(self, clip_num, sess, frames_per_clip):
         self.clip_num = clip_num
         self.inputs = tf.placeholder(
-            tf.float32, [self.clip_num, 16, 112, 112, 3])
+            tf.float32, [self.clip_num, frames_per_clip, 112, 112, 3])
         _, self.c3d_features = c3d(self.inputs, 1, clip_num)
         saver = tf.train.Saver()
         path = inspect.getfile(ChunkC3DExtractor)
@@ -69,7 +68,7 @@ class ChunkC3DExtractor(object):
         self.sess = sess
         
     def _select_clips(self, path):
-        """Select self.batch_size clips for video. Each clip has 16 frames.
+        """Select self.batch_size clips for video. Each clip has [frames_per_clip] frames.
 
         Args:
             path: Path of video.
@@ -94,7 +93,7 @@ class ChunkC3DExtractor(object):
                 clip_end = total_frames
             clip = video_data[clip_start:clip_end]
             new_clip = []
-            for j in range(16):
+            for j in range(frames_per_clip):
                 frame_data = clip[j]
                 img = Image.fromarray(frame_data)
                 img = img.resize((112, 112), Image.BILINEAR)
