@@ -9,34 +9,32 @@ from VideoQA.util.vgg16 import Vgg16
 
 
 class ChunkVGGExtractor(object):
-    def __init__(self, frame_num, sess):
+    def __init__(self, frame_num, sess, video_size):
         self.frame_num = frame_num
         self.inputs = tf.placeholder(tf.float32, [self.frame_num, 224, 224, 3])
         self.vgg16 = Vgg16()
         self.vgg16.build(self.inputs)
         self.sess = sess
+        self.video_size = video_size
 
-    def _select_frames(self, path):
+    def _select_frames(self, frames):
         """Select representative frames for video.
 
         Ignore some frames both at begin and end of video.
 
         Args:
-            path: Path of video.
+            path: Array of video frames.
         Returns:
             frames: list of frames.
         """
-        frames = list()
-        video_data = skvideo.io.vread(path)
-        total_frames = video_data.shape[0]
+        converted_frames = list()
         # Ignore some frame at begin and end.
-        for i in np.linspace(0, total_frames, self.frame_num + 2)[1:self.frame_num + 1]:
-            frame_data = video_data[int(i)]
-            img = Image.fromarray(frame_data)
+        for i in np.linspace(0, self.video_size, self.frame_num + 2)[1:self.frame_num + 1]:
+            img = frames[int(i)]
             img = img.resize((224, 224), Image.BILINEAR)
             frame_data = np.array(img)
-            frames.append(frame_data)
-        return frames
+            converted_frames.append(frame_data)
+        return converted_frames
 
     def extract(self, frames):
         """Get VGG fc7 activations as representation for video.
@@ -46,15 +44,14 @@ class ChunkVGGExtractor(object):
         Returns:
             feature: [batch_size, 4096]
         """
-        frames = self._select_frames(path)
-        # We usually take features after the non-linearity, by convention.
+        frames = self._select_frames(frames)
         feature = self.sess.run(
             self.vgg16.relu7, feed_dict={self.inputs: frames})
         return feature
 
 
 class ChunkC3DExtractor(object):
-    def __init__(self, clip_num, sess, frames_per_clip):
+    def __init__(self, clip_num, sess, frames_per_clip, video_size):
         self.clip_num = clip_num
         self.inputs = tf.placeholder(
             tf.float32, [self.clip_num, frames_per_clip, 112, 112, 3])
@@ -66,54 +63,40 @@ class ChunkC3DExtractor(object):
             path, 'sports1m_finetuning_ucf101.model'))
         self.mean = np.load(os.path.join(path, 'crop_mean.npy'))
         self.sess = sess
+        self.video_size = video_size
+        self.frames_per_clip = frames_per_clip
         
-    def _select_clips(self, chunk):
-        """Select self.batch_size clips for video. Each clip has [frames_per_clip] frames.
-
-        Args:
-            path: Path of video.
-        Returns:
-            clips: list of clips.
-        """
-        path = "bla"
-        clips = list()
-        import pdb; pdb.set_trace()
-        # video_info = skvideo.io.ffprobe(path)
-        video_data = skvideo.io.vread(path)
-        total_frames = video_data.shape[0]
-        height = video_data[1]
-        width = video_data.shape[2]
-        for i in np.linspace(0, total_frames, self.clip_num + 2)[1:self.clip_num + 1]:
-            # Select center frame first, then include surrounding frames
-            clip_start = int(i) - 8
-            clip_end = int(i) + 8
+    def _create_clips(self, frames):
+        for i in np.linspace(0, self.video_size, self.clip_num + 2)[1:self.clip_num + 1]:
+            clip_start = int(i) - int(self.frames_per_clip/2)
+            clip_end = int(i) + int(self.frames_per_clip/2) - 1
             if clip_start < 0:
                 clip_end = clip_end - clip_start
                 clip_start = 0
-            if clip_end > total_frames:
-                clip_start = clip_start - (clip_end - total_frames)
-                clip_end = total_frames
-            clip = video_data[clip_start:clip_end]
+            if clip_end > self.video_size:
+                clip_start = clip_start - (clip_end - self.video_size)
+                clip_end = self.video_size
+
             new_clip = []
-            for j in range(frames_per_clip):
-                frame_data = clip[j]
+            for j in range(self.frames_per_clip):
+                frame_data = frames[clip_start + j]
                 img = Image.fromarray(frame_data)
+                img = frames[j]
                 img = img.resize((112, 112), Image.BILINEAR)
                 frame_data = np.array(img) * 1.0
                 frame_data -= self.mean[j]
                 new_clip.append(frame_data)
             clips.append(new_clip)
-        return clips
 
-    def extract(self, path):
+    def extract(self, frames):
         """Get 4096-dim activation as feature for video.
 
         Args:
-            path: Path of video.
+            path: Video frames.
         Returns:
             feature: [self.batch_size, 4096]
         """
-        clips = self._select_clips(path)
+        clips = self._create_clips(frames)
         feature = self.sess.run(
             self.c3d_features, feed_dict={self.inputs: clips})
         return feature

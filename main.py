@@ -15,13 +15,31 @@ def parse_args():
     parser.add_argument('--video_name', type=str, default='./out.mp4')
     parser.add_argument('--database_name', type=str, default='vqadb')
 
-    parser.add_argument('--cache_size', type=int, default='100') # in terms of chunks
-    parser.add_argument('--chunk_size', type=int, default='10') # in terms of frames
-    parser.add_argument('--evict_mod', type=int, default='10') # how often to evict (in terms of chunks)
-    parser.add_argument('--use_ram', type=bool, default='True')  # use RAM for cache
-    
-    # frames per clip for c3d feature extraction
-    parser.add_argument('--frames_per_clip_c3d', type=int, default='16')
+    ## CACHE VARIABLES ##
+    # Cache size (in terms of chunks)
+    parser.add_argument('--cache_size', type=int, default='100')
+    # How often to evict (in terms of chunks). A lower number 
+    # (more frequent evictions) means the chunk creation and 
+    # cache insertion process takes longer.
+    parser.add_argument('--evict_mod', type=int, default='10')
+    # Whether to use RAM for the cache
+    parser.add_argument('--use_ram', type=bool, default='True')
+
+    ## VIDEO PROCESSING VARIABLES ##
+    # The size of a video chunk to cache
+    parser.add_argument('--chunk_size', type=int, default='10')
+
+    ## C3D FEATURE EXTRACTION ##
+    # Depending on how these variables are set, some video data
+    # might be lost. A chunk is divided into evenly-spaced clips
+    # of some fixed size. If clip frames don't overlap then video
+    # data is lost. Likewise, if clips frames overlap too much,
+    # potentially too much computation occurs with no benefit.
+
+    # Amount of clips to create per chunk. Can be <= chunk_size
+    parser.add_argument('--clip_num_c3d', type=int, default='5')
+    # Frames per clip. Can be <= chunk_size
+    parser.add_argument('--frames_per_clip_c3d', type=int, default='2')
 
     # Not necessary?
     parser.add_argument('--database_user', type=str, default='vqadbuser')
@@ -31,7 +49,9 @@ def parse_args():
     return args    
 
 
-def process_video(video_name, chunk_size, cache, frames_per_clip):
+def process_video(
+    video_name, chunk_size, cache, frames_per_clip_c3d, clip_num_c3d
+):
     # TODO: LATER-- replace this with something more real-time
     # and not frame-by-frame
     cap = cv2.VideoCapture(video_name)
@@ -43,10 +63,9 @@ def process_video(video_name, chunk_size, cache, frames_per_clip):
     chunk_count = 0
     frame_count = 0
     current_chunk = Chunk(
-        cache, chunk_count, chunk_size, frames_per_clip
+        cache, chunk_count, chunk_size, frames_per_clip_c3d, clip_num_c3d
     )
 
-    print("process video thread loop")
     while True:
         flag, frame = cap.read()
         if flag:
@@ -62,7 +81,7 @@ def process_video(video_name, chunk_size, cache, frames_per_clip):
                 )
                 chunk_count += 1
             else:
-                current_chunk.add_frame(pos_frame, frame_count)
+                current_chunk.add_frame(frame, frame_count)
 
             frame_count += 1
         else:
@@ -104,7 +123,11 @@ def main():
     # Run threads
     process_video_thread = threading.Thread(
       target=process_video, args=(
-          args.video_name, args.chunk_size, cache, args.frames_per_clip_c3d
+          args.video_name,
+          args.chunk_size,
+          cache,
+          args.frames_per_clip_c3d,
+          args.clip_num_c3d
         )
     )
     ask_questions_thread = threading.Thread(
@@ -120,5 +143,6 @@ def main():
 
     while True:
         continue
+
 
 main()
