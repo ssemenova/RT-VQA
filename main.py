@@ -89,7 +89,7 @@ def process_video(
         if flag:
             pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
             
-            print("processing frame #" + pos_frame)
+            print("processing frame #" + str(pos_frame))
             if frame_count == chunk_size:
                 print("finishing chunk #" + chunk_count)
                 # TODO: Run this in a new thread and not concurrently
@@ -158,6 +158,7 @@ def main():
         args.chunk_size
     )
 
+    print("Made cache")
     # Run threads
     process_video_thread = threading.Thread(
       target=process_video, args=(

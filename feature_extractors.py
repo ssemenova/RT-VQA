@@ -6,7 +6,7 @@ from PIL import Image
 from VideoQA.util.c3d import c3d
 from VideoQA.util.vgg16 import Vgg16
 
-from pytorch-i3d.extract_features import extract_features
+from pytorch_i3d.pytorch_i3d import InceptionI3d
 
 class ChunkVGGExtractor(object):
     def __init__(self, frame_num, sess, video_size):
