@@ -105,6 +105,8 @@ class ChunkC3DExtractor(object):
 
 
 class ChunkI3DExtractor():
+    # TODO: later: might be worth removing i3d extraction and training
+    # TMLGA on just c3d features
     def __init__():
         self.max_steps = 64e3
         self.mode = 'rgb'
