@@ -2,12 +2,13 @@ import argparse
 import cv2
 import time
 import threading
+import sys
 
 from chunk import Chunk
 from cache import Cache
 from chunk_localization import Chunk_Localization
 from vqa import VQA
-from utils import StoppableThread
+from other import StoppableThread
 
 
 running_threads = {}
@@ -55,9 +56,10 @@ def parse_args():
         '--videoqa_model_path', type=str, default='VideoQA/log/evqa'
     )
 
+
     # TMLGA VARIABLES ##
     parser.add_argument('--config_file_path', type=str, default='0')
-    parser.add_argument('--vocab_file_path', type=str, default='0')
+    parser.add_argument('--vocab_file_path', type=str, default='charades_vocab.pickle')
     parser.add_argument('--max_question_length', type=int, default='30')
     parser.add_argument('--min_question_length', type=int, default='3')
 
@@ -187,6 +189,5 @@ def main():
 
     while True:
         continue
-
 
 main()

@@ -1,5 +1,9 @@
+import sys
+sys.path.append(sys.path[0] + '/TMLGA')
 from TMLGA.utils.vocab import Vocab
-from TMLGA.modeling.localization import Localization
+#from TMLGA.modeling.localization import Localization
+#import TMLGA as TMLGA
+from TMLGA.vqa_input import setup_TMLGA_and_get_model
 
 class Chunk_Localization():
   def __init__(
@@ -10,13 +14,13 @@ class Chunk_Localization():
     min_question_length,
     chunk_size
   ):
-    self.model = Localization()
+    self.model = setup_TMLGA_and_get_model()
 
     self.max_question_length = max_question_length
     self.min_question_length = min_question_length
     self.chunk_size = chunk_size
 
-    _create_vocab(vocab_file_path)
+    self._create_vocab(vocab_file_path)
     self.embedding_matrix = _get_embedding_matrix(
       max_question_length, min_question_length
     )
@@ -26,7 +30,23 @@ class Chunk_Localization():
     )
 
   def _create_vocab(self, vocab_file_path):
-    with open(vocab_file_path, 'rb') as f:
+        if not os.path.exists(self.vocab_file_path):
+            print("Creating vocab")
+            self.vocab = Vocab(
+                add_bos=False,
+                add_eos=False,
+                add_padding=False,
+                min_count=self.min_count)
+
+            for example in self.dataset:
+                self.vocab.add_tokenized_sentence(example['tokens'][:self.train_max_length])
+
+                self.vocab.finish()
+
+            with open(self.vocab_file_path, 'wb') as f:
+                pickle.dump(self.vocab, f)
+
+      with open(vocab_file_path, 'rb') as f:
       self.vocab = pickle.load(f)
 
   def _get_embedding_matrix(self, max_question_length, min_question_length):

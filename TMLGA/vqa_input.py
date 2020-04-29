@@ -1,3 +1,5 @@
+import sys
+sys.path.append(sys.path[0] + '/TMLGA')
 import os
 import cv2
 import time
@@ -8,20 +10,12 @@ import argparse
 import numpy as np
 
 from config import cfg
-from utils.miscellaneous import mkdir
-from utils.logger import setup_logger
-from engine import create_model
+from .utils.miscellaneous import mkdir
+from .utils.logger import setup_logger
+from engine.build import create_model
 
-def setup_TMLGA_and_get_model(config_file='experiments/charades_sta.yam'):
-    parser = argparse.ArgumentParser(description="PyTorch Query Localization in Videos Training")
-    parser.add_argument(
-        "--config-file",
-        default="",
-        metavar="FILE",
-        help="path to config file",
-        type=str,)
-    args = parser.parse_args()
-
+def setup_TMLGA_and_get_model(config_file='experiments/charades_sta.yaml'):
+    config_file = os.getcwd() + "/TMLGA/" + config_file
     experiment_name = config_file.split("/")[-1]
     log_directory   = config_file.replace(experiment_name,"logs/")
     vis_directory   = config_file.replace(experiment_name,"visualization/")

@@ -8,66 +8,28 @@ from utils.rnns import feed_forward_rnn
 import utils.pooling as POOLING
 
 class Localization(nn.Module):
-    def __init__(
-    self,
-    batch_size_train=256,
-    reduction_input_size=1024,
-    reduction_output_size=512,
-    localization_input_size=512,
-    hidden_size=256,
-    num_layers=2,
-    bias=False,
-    dropout=0.5,
-    bidirectional=True,
-    batch_first=True,
-    classification_input_size=512,
-    classification_output_size=1
-    ):
-        super(TMLGA_Model, self).__init__()
-        self.cfg = cfg
-        self.batch_size = batch_size_train
-        self.model_df  = DynamicFilter(cfg)
+    def __init__(self, cfg):
+         super(Localization, self).__init__()
+         self.cfg = cfg
+         self.batch_size = cfg.BATCH_SIZE_TRAIN
+         self.model_df  = DynamicFilter(cfg)
 
-        self.reduction  = nn.Linear(reduction_input_size, reduction_output_size)
-        self.multimodal_fc1 = nn.Linear(512*2, 1)
-        self.multimodal_fc2 = nn.Linear(512, 1)
+         self.reduction  = nn.Linear(cfg.REDUCTION.INPUT_SIZE, cfg.REDUCTION.OUTPUT_SIZE)
+         self.multimodal_fc1 = nn.Linear(512*2, 1)
+         self.multimodal_fc2 = nn.Linear(512, 1)
 
-        self.rnn_localization = nn.GRU(
-            input_size   = localization_input_size,
-            hidden_size  = hidden_size,
-            num_layers   = num_layers,
-            bias         = bias,
-            dropout      = dropout,
-            bidirectional= bidirectional,
-            batch_first  = batch_first
-        )
-
-        self.pooling = POOLING.MeanPoolingLayer()
-        self.starting = nn.Linear(classification_input_size, classification_output_size)
-        self.ending = nn.Linear(classification_input_size, classification_output_size)
-
-    # def __init__(self, cfg):
-    #     super(Localization, self).__init__()
-    #     self.cfg = cfg
-    #     self.batch_size = cfg.BATCH_SIZE_TRAIN
-    #     self.model_df  = DynamicFilter(cfg)
-
-    #     self.reduction  = nn.Linear(cfg.REDUCTION.INPUT_SIZE, cfg.REDUCTION.OUTPUT_SIZE)
-    #     self.multimodal_fc1 = nn.Linear(512*2, 1)
-    #     self.multimodal_fc2 = nn.Linear(512, 1)
-
-    #     self.rnn_localization = nn.GRU(input_size   = cfg.LOCALIZATION.INPUT_SIZE,
-    #                                     hidden_size  = cfg.LOCALIZATION.HIDDEN_SIZE,
-    #                                     num_layers   = cfg.LOCALIZATION.NUM_LAYERS,
-    #                                     bias         = cfg.LOCALIZATION.BIAS,
-    #                                     dropout      = cfg.LOCALIZATION.DROPOUT,
-    #                                     bidirectional= cfg.LOCALIZATION.BIDIRECTIONAL,
-    #                                     batch_first = cfg.LOCALIZATION.BATCH_FIRST)
+         self.rnn_localization = nn.GRU(input_size   = cfg.LOCALIZATION.INPUT_SIZE,
+                                         hidden_size  = cfg.LOCALIZATION.HIDDEN_SIZE,
+                                         num_layers   = cfg.LOCALIZATION.NUM_LAYERS,
+                                         bias         = cfg.LOCALIZATION.BIAS,
+                                         dropout      = cfg.LOCALIZATION.DROPOUT,
+                                         bidirectional= cfg.LOCALIZATION.BIDIRECTIONAL,
+                                         batch_first = cfg.LOCALIZATION.BATCH_FIRST)
 
 
-    #     self.pooling = POOLING.MeanPoolingLayer()
-    #     self.starting = nn.Linear(cfg.CLASSIFICATION.INPUT_SIZE, cfg.CLASSIFICATION.OUTPUT_SIZE)
-    #     self.ending = nn.Linear(cfg.CLASSIFICATION.INPUT_SIZE, cfg.CLASSIFICATION.OUTPUT_SIZE)
+         self.pooling = POOLING.MeanPoolingLayer()
+         self.starting = nn.Linear(cfg.CLASSIFICATION.INPUT_SIZE, cfg.CLASSIFICATION.OUTPUT_SIZE)
+         self.ending = nn.Linear(cfg.CLASSIFICATION.INPUT_SIZE, cfg.CLASSIFICATION.OUTPUT_SIZE)
 
     def attention(self, videoFeat, filter, lengths):
         pred_local = torch.bmm(videoFeat, filter.unsqueeze(2)).squeeze()

@@ -10,7 +10,7 @@ import numpy as np
 from utils.visualization import Visualization
 from utils.miscellaneous import mkdir
 
-from tensorboardX import SummaryWriter
+#from tensorboardX import SummaryWriter
 
 def trainer(cfg):
     print('trainer')
@@ -200,6 +200,7 @@ def tester(cfg):
 
 
 def create_model(cfg):
+    load_path = "TMLGA/checkpoints/charades_sta/model_charades_sta"
     model = modeling.build(cfg)
     model = torch.load(load_path, map_location=torch.device('cpu'))
 
