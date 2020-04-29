@@ -2,10 +2,11 @@ import torch
 import numpy as np
 from torch import nn
 from torch.nn import functional as F
-from modeling.dynamic_filters.build import DynamicFilter
-from utils import loss as L
-from utils.rnns import feed_forward_rnn
-import utils.pooling as POOLING
+
+from TMLGA.modeling.dynamic_filters.build import DynamicFilter
+from TMLGA.utils import loss as L
+from TMLGA.utils.rnns import feed_forward_rnn
+import TMLGA.utils.pooling as POOLING
 
 class TMLGA_Model(nn.Module):
   def __init__(
@@ -125,3 +126,30 @@ class TMLGA_Model(nn.Module):
         total_loss = start_loss + end_loss
 
     return total_loss, individual_loss, pred_start, pred_end, attention, atten_loss
+
+
+import torch
+import numpy as np
+from torch import nn
+
+import modeling.dynamic_filters as DF
+import utils.pooling as POOLING
+
+class DynamicFilter(nn.Module):
+  def __init__(self, cfg):
+    self.cfg = cfg
+
+    factory = getattr(DF, cfg.DYNAMIC_FILTER.TAIL_MODEL)
+    self.tail_df = factory(cfg)
+
+    factory = getattr(POOLING, cfg.DYNAMIC_FILTER.POOLING)
+    self.pooling_layer = factory()
+
+    factory = getattr(DF, cfg.DYNAMIC_FILTER.HEAD_MODEL)
+    self.head_df = factory(cfg)
+
+  def forward(self, sequences, lengths=None):
+    output, _ = self.tail_df(sequences, lengths)
+    output = self.pooling_layer(output, lengths)
+    output = self.head_df(output)
+    return output, lengths 

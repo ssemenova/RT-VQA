@@ -1,5 +1,5 @@
 from TMLGA.utils.vocab import Vocab
-from TMLGA_Model improt TMLGA_Model
+import modeling
 
 class Chunk_Localization():
   def __init__(
@@ -10,7 +10,7 @@ class Chunk_Localization():
     min_question_length,
     chunk_size
   ):
-    self.model = TMLGA_Model()
+    self.model = modeling.build(cfg)
 
     self.max_question_length = max_question_length
     self.min_question_length = min_question_length
