@@ -104,6 +104,14 @@ class ChunkC3DExtractor(object):
         return feature
 
 
+class ChunkI3DExtractor():
+    def __init__():
+        pass
+
+    def extract(self, frames):
+        pass
+
+
 class StoppableThread(threading.Thread):
     """Thread class with a stop() method. The thread itself has to check
     regularly for the stopped() condition."""

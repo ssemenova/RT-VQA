@@ -5,7 +5,10 @@ import threading
 
 from chunk import Chunk
 from cache import Cache
+from chunk_localization import Chunk_Localization
+from vqa import VQA
 from utils import StoppableThread
+
 
 running_threads = {}
 
@@ -41,9 +44,23 @@ def parse_args():
     # Frames per clip. Can be <= chunk_size
     parser.add_argument('--frames_per_clip_c3d', type=int, default='2')
 
-    # Not necessary?
-    parser.add_argument('--database_user', type=str, default='vqadbuser')
-    parser.add_argument('--database_password', type=str, default='pwd')
+    ## VIDEO QA VARIABLES ##
+    # "Config_id" for VideoQA in config.py
+    parser.add_argument('--videoqa_config', type=int, default='0')
+    # Path to the VideoQA model. This default is what generates when
+    # you run the run_gra command in the VideoQA directory. If you train
+    # the model by running a different VideoQA command, this might be in
+    # a different location.
+    parser.add_argument(
+        '--videoqa_model_path', type=str, default='VideoQA/log/evqa'
+    )
+
+    # TMLGA VARIABLES ##
+    parser.add_argument('--config_file_path', type=str, default='0')
+    parser.add_argument('--vocab_file_path', type=str, default='0')
+    parser.add_argument('--max_question_length', type=int, default='30')
+    parser.add_argument('--min_question_length', type=int, default='3')
+
 
     args = parser.parse_args()
     return args    
@@ -63,7 +80,8 @@ def process_video(
     chunk_count = 0
     frame_count = 0
     current_chunk = Chunk(
-        cache, chunk_count, chunk_size, frames_per_clip_c3d, clip_num_c3d
+        cache, chunk_count, chunk_size,
+        frames_per_clip_c3d, clip_num_c3d
     )
 
     while True:
@@ -71,13 +89,15 @@ def process_video(
         if flag:
             pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
             
-            print("processing frame")
+            print("processing frame #" + pos_frame)
             if frame_count == chunk_size:
+                print("finishing chunk #" + chunk_count)
                 running_threads.update({
                     chunk_count: current_chunk.commit()
                 })
                 current_chunk = Chunk(
-                    cache, chunk_count, chunk_size, frames_per_clip_c3d, clip_num_c3d
+                    cache, chunk_count, chunk_size,
+                    frames_per_clip_c3d, clip_num_c3d
                 )
                 chunk_count += 1
                 frame_count = 0
@@ -97,8 +117,15 @@ def process_video(
     pass
 
 
-def ask_questions():
-    # TODO: write question-asking code here when ready
+def ask_questions(videoqa_config, videoqa_model_path):
+    # TODO: process user input
+
+    # TODO: find relevant chunk
+
+    vqa_module = VQA(videoqa_config, videoqa_model_path)
+    # TODO: encode question
+    vqa_module.predict(question, relevant_chunk)
+
     pass
 
 
@@ -132,7 +159,10 @@ def main():
         )
     )
     ask_questions_thread = threading.Thread(
-        target=ask_questions, args=()
+        target=ask_questions, args=(
+            args.videoqa_config,
+            args.videoqa_model_path
+        )
     )
     kill_old_threads_thread = threading.Thread(
         target=kill_old_threads, args=(cache,)

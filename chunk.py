@@ -4,11 +4,10 @@ import sys
 import tensorflow as tf
 from PIL import Image
 
-from utils import ChunkC3DExtractor, ChunkVGGExtractor
+from utils import ChunkC3DExtractor, ChunkVGGExtractor, ChunkI3DExtractor
 
 
 class Chunk(object):
-
   def __init__(self, cache, id, chunk_size, frames_per_clip, clip_num):
     self.cache = cache
     self.id = id
@@ -40,8 +39,14 @@ class Chunk(object):
       self.c3d_features = self.c3d_extractor.extract(self.image_frames)
 
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
-      self.vgg_extractor = ChunkVGGExtractor(self.clip_num, sess, self.chunk_size)
+      self.vgg_extractor = ChunkVGGExtractor(
+        self.clip_num, sess, self.chunk_size
+      )
       self.vgg_features = self.vgg_extractor.extract(self.image_frames)
+
+    self.i3d_features = ChunkI3DExtractor(
+      
+    )
 
     self.cache.insert(self)
 
