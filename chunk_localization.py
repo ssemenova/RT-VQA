@@ -1,15 +1,18 @@
 import sys
 sys.path.append(sys.path[0] + '/TMLGA')
 from TMLGA.utils.vocab import Vocab
-#from TMLGA.modeling.localization import Localization
-#import TMLGA as TMLGA
 from TMLGA.vqa_input import setup_TMLGA_and_get_model
+import pickle
+import os
+import torch
+import numpy as np
 
 class Chunk_Localization():
   def __init__(
     self,
     config_file_path,
     vocab_file_path,
+    embeddings_file_path,
     max_question_length,
     min_question_length,
     chunk_size
@@ -21,35 +24,18 @@ class Chunk_Localization():
     self.chunk_size = chunk_size
 
     self._create_vocab(vocab_file_path)
-    self.embedding_matrix = _get_embedding_matrix(
-      max_question_length, min_question_length
-    )
-
-    self.localize_array = torch.from_numpy(
-      np.ones(feat_length, dtype=np.float32)
+    self.embedding_matrix = self._get_embedding_matrix(
+      embeddings_file_path, max_question_length, min_question_length
     )
 
   def _create_vocab(self, vocab_file_path):
-        if not os.path.exists(self.vocab_file_path):
-            print("Creating vocab")
-            self.vocab = Vocab(
-                add_bos=False,
-                add_eos=False,
-                add_padding=False,
-                min_count=self.min_count)
-
-            for example in self.dataset:
-                self.vocab.add_tokenized_sentence(example['tokens'][:self.train_max_length])
-
-                self.vocab.finish()
-
-            with open(self.vocab_file_path, 'wb') as f:
-                pickle.dump(self.vocab, f)
-
       with open(vocab_file_path, 'rb') as f:
-      self.vocab = pickle.load(f)
+        self.vocab = pickle.load(f)
 
-  def _get_embedding_matrix(self, max_question_length, min_question_length):
+  def _get_embedding_matrix(
+        self, embeddings_file_path,
+        max_question_length, min_question_length
+    ):
     '''
     Gets you a torch tensor with the embeddings
     in the indices given by self.vocab.
@@ -57,9 +43,8 @@ class Chunk_Localization():
     different vector.
     '''
     print('TMLGA: loading embeddings into memory...')
-    file_path = f'charades_embeddings_{min_question_length}_{max_question_length}.pth'
 
-    if self.is_training and not os.path.exists(self.embeddings_file_path):
+    if not os.path.exists(embeddings_file_path):
       # if 'glove' in embeddings_path.lower():
       #     tmp_file = get_tmpfile("test_word2vec.txt")
       #     _ = glove2word2vec(embeddings_path, tmp_file)
@@ -73,15 +58,19 @@ class Chunk_Localization():
           (vocab_size , embeddings.vector_size),
           dtype=torch.float32)
 
-      for token, idx in vocab.token2index.items():
+      for token, idx in self.vocab.token2index.items():
           if token in embeddings:
               matrix[idx] = torch.from_numpy(
                   embeddings[token])
-    else:
-      with open(file_path, 'wb') as f:
-        torch.save(embedding_matrix, f)
 
-    return embedding_matrix
+      with open(embeddings_file_path, 'wb') as f:
+        torch.save(matrix, f)
+
+    else:
+      with open(embeddings_file_path, 'rb') as f:
+        matrix = torch.load(f)
+
+    return matrix
 
   def _convert_question(self, question):
     raw_tokens = question.translate(
@@ -107,6 +96,10 @@ class Chunk_Localization():
   def predict(self, cache, question):
     model = torch.load(load_path,map_location=torch.device('cpu'))
     model.eval()
+
+    self.localize_array = torch.from_numpy(
+      np.ones(feat_length, dtype=np.float32)
+    )
 
     for chunk_id in range(cache.oldest_id, cache.newest_id):
       chunk = cache[chunk_id]

@@ -163,8 +163,8 @@ def tester(cfg):
 
     vis_test  = Visualization(cfg, dataset_size_test, is_train=False)
 
-    writer_path = os.path.join(cfg.VISUALIZATION_DIRECTORY, cfg.EXPERIMENT_NAME)
-    writer = SummaryWriter(writer_path)
+    #writer_path = os.path.join(cfg.VISUALIZATION_DIRECTORY, cfg.EXPERIMENT_NAME)
+    #writer = SummaryWriter(writer_path)
 
     total_iterations = 0
     total_iterations_val = 0

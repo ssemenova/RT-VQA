@@ -59,7 +59,14 @@ def parse_args():
 
     # TMLGA VARIABLES ##
     parser.add_argument('--config_file_path', type=str, default='0')
-    parser.add_argument('--vocab_file_path', type=str, default='charades_vocab.pickle')
+    parser.add_argument(
+        '--vocab_file_path', type=str, 
+        default='TMLGA/charades_vocab_1_30.pickle'
+    )
+    parser.add_argument(
+        '--embeddings_file_path', type=str,
+        default="TMLGA/charades_embeddings_1_30.pth"
+    )
     parser.add_argument('--max_question_length', type=int, default='30')
     parser.add_argument('--min_question_length', type=int, default='3')
 
@@ -93,7 +100,7 @@ def process_video(
             
             print("processing frame #" + str(pos_frame))
             if frame_count == chunk_size:
-                print("finishing chunk #" + chunk_count)
+                print("finishing chunk #" + str(chunk_count))
                 # TODO: Run this in a new thread and not concurrently
                 running_threads.update({
                     chunk_count: current_chunk.commit()
@@ -155,6 +162,7 @@ def main():
     chunk_localization = Chunk_Localization(
         args.config_file_path,
         args.vocab_file_path,
+        args.embeddings_file_path,
         args.max_question_length,
         args.min_question_length,
         args.chunk_size

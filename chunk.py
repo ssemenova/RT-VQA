@@ -29,22 +29,28 @@ class Chunk(object):
     self.image_frames.append(Image.fromarray(frame))
 
   def commit(self):
+    print("Creating chunk #" + str(self.id))
+
     sess_config = tf.ConfigProto()
     sess_config.gpu_options.allow_growth = True
     sess_config.gpu_options.visible_device_list = '0'
-
+    
+    print("C3D extractor...")
+    import pdb; pdb.set_trace()
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
       c3d_extractor = ChunkC3DExtractor(
         self.clip_num, sess, self.frames_per_clip, self.chunk_size
       )
       self.c3d_features = c3d_extractor.extract(self.image_frames)
-
+    
+    print("VGG extractor...")
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
       vgg_extractor = ChunkVGGExtractor(
         self.clip_num, sess, self.chunk_size
       )
       self.vgg_features = vgg_extractor.extract(self.image_frames)
 
+    print("I3D extractor...")
     i3d_extractor = ChunkI3DExtractor()
     self.i3d_features = i3d_extractor.extract(self.image_frames)
 

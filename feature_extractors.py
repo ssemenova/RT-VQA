@@ -1,6 +1,7 @@
 import inspect
 import numpy as np
 import tensorflow as tf
+import os
 from PIL import Image
 
 from VideoQA.util.c3d import c3d
