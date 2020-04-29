@@ -1,5 +1,5 @@
-from TMLGA.config import cfg
 from TMLGA.utils.vocab import Vocab
+from TMLGA_Model improt TMLGA_Model
 
 class Chunk_Localization():
   def __init__(
@@ -10,14 +10,7 @@ class Chunk_Localization():
     min_question_length,
     chunk_size
   ):
-    # experiment_name = args.config_file.split("/")[-1]
-    # log_directory   = args.config_file.replace(experiment_name,"logs/")
-    # vis_directory   = args.config_file.replace(experiment_name,"visualization/")
-    # experiment_name = experiment_name.replace(".yaml","")
-    # cfg.merge_from_list(['EXPERIMENT_NAME', experiment_name, 'LOG_DIRECTORY', log_directory, "VISUALIZATION_DIRECTORY", vis_directory])
-    # cfg.merge_from_file(args.config_file)
-
-    # self.model = modeling.build(cfg)
+    self.model = TMLGA_Model()
 
     self.max_question_length = max_question_length
     self.min_question_length = min_question_length

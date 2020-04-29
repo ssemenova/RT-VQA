@@ -4,7 +4,7 @@ import sys
 import tensorflow as tf
 from PIL import Image
 
-from utils import ChunkC3DExtractor, ChunkVGGExtractor, ChunkI3DExtractor
+from feature_extractors import ChunkC3DExtractor, ChunkVGGExtractor, ChunkI3DExtractor
 
 
 class Chunk(object):
