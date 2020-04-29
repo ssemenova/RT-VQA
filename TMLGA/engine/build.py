@@ -197,3 +197,10 @@ def tester(cfg):
         aux = vis_test.run(index, pred_start, pred_end, start, end, videoFeat_lengths, epoch, loss.detach(), individual_loss, attention, atten_loss, time_starts, time_ends, factors, fps)
         total_iterations_val += 1
     a = vis_test.plot(epoch)
+
+
+def create_model(cfg):
+    model = modeling.build(cfg)
+    model = torch.load(load_path, map_location=torch.device('cpu'))
+
+    return model
