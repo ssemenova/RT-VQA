@@ -26,7 +26,7 @@ class Cache(object):
       t = (id,)
       cursor.execute('SELECT * FROM videochunks WHERE id=?', t)
       results = cursor.fetchone()
-      # TODO: return something other than this so it matches the above
+      # TODO: later, return something other than this so it matches the above
       return results[1], results[2]
 
   def _connect(self):
@@ -38,7 +38,7 @@ class Cache(object):
           chunk.id: chunk
       })
     else:
-      # TODO: is self a valid way to insert vgg and c3d data?
+      # TODO: later, is self a valid way to insert vgg and c3d data?
       cursor = self.conn.cursor()
       cursor.execute(
         "INSERT INTO videochunks VALUES(" +

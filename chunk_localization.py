@@ -75,7 +75,7 @@ class Chunk_Localization():
 
     return tokens
 
-  def _pad_sequence(sequence):
+  def _pad_sequence(self, sequence):
     lengths = []
     for s in sequence:
         lengths.append(s.shape[0])
@@ -102,3 +102,6 @@ class Chunk_Localization():
       loss, individual_loss, pred_start, pred_end, attention, atten_loss = model(
         features, feat_length, tokens, tokens_lengths, start, end, self.localize_array
       )
+      # TODO: early stop?
+
+    #TODO: return most likely chunk

@@ -92,6 +92,7 @@ def process_video(
             print("processing frame #" + pos_frame)
             if frame_count == chunk_size:
                 print("finishing chunk #" + chunk_count)
+                # TODO: Run this in a new thread and not concurrently
                 running_threads.update({
                     chunk_count: current_chunk.commit()
                 })
@@ -117,13 +118,14 @@ def process_video(
     pass
 
 
-def ask_questions(videoqa_config, videoqa_model_path):
+def ask_questions(chunk_localization, cache, videoqa_config, videoqa_model_path):
     # TODO: process user input
+    question = "???"
 
-    # TODO: find relevant chunk
+    relevant_chunk = chunk_localization.predict(cache, question)
 
     vqa_module = VQA(videoqa_config, videoqa_model_path)
-    # TODO: encode question
+    # TODO: encode question (Can I use the encoding from chunk_localization?)
     vqa_module.predict(question, relevant_chunk)
 
     pass
@@ -147,7 +149,15 @@ def main():
         args.evict_mod,
         args.use_ram,
     )
-    
+
+    chunk_localization = Chunk_Localization(
+        args.config_file_path,
+        args.vocab_file_path,
+        args.max_question_length,
+        args.min_question_length,
+        args.chunk_size
+    )
+
     # Run threads
     process_video_thread = threading.Thread(
       target=process_video, args=(
@@ -160,6 +170,8 @@ def main():
     )
     ask_questions_thread = threading.Thread(
         target=ask_questions, args=(
+            chunk_localization,
+            cache,
             args.videoqa_config,
             args.videoqa_model_path
         )

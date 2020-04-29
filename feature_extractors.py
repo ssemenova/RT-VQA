@@ -2,9 +2,11 @@ import inspect
 import numpy as np
 import tensorflow as tf
 from PIL import Image
+
 from VideoQA.util.c3d import c3d
 from VideoQA.util.vgg16 import Vgg16
 
+from pytorch-i3d.extract_features import extract_features
 
 class ChunkVGGExtractor(object):
     def __init__(self, frame_num, sess, video_size):
@@ -104,8 +106,50 @@ class ChunkC3DExtractor(object):
 
 class ChunkI3DExtractor():
     def __init__():
-        pass
+        self.max_steps = 64e3
+        self.mode = 'rgb'
+
+    def _convert_frames(self, frames):
+        # TODO: later: this might not be necessary to do
+        # there's probably a way to combine this computation
+        # with the frame conversion that happens in the above
+        # feature extractors, and avoid doing it twice
+        new_frames = []
+        for i in range(len(frames)):
+            img = frames[i]
+            w,h,c = img.shape
+            if w < 226 or h < 226:
+                d = 226.-min(w,h)
+                sc = 1+d/min(w,h)
+                img = cv2.resize(img,dsize=(0,0),fx=sc,fy=sc)
+            img = (img/255.)*2 - 1
+            new_frames.append(img)
+
+        return torch.from_numpy(
+            np.asarray(frames, dtype=np.float32).transpose([3, 0, 1, 2])
+        )
 
     def extract(self, frames):
-        pass
+        frames = self._convert_frames(frames)
 
+        i3d = InceptionI3d(400, in_channels=3)
+        i3d.replace_logits(157)
+        i3d.load_state_dict(torch.load(load_model))
+
+        i3d.train(False)
+
+        # bcthw variable explanation in charades_dataset_full.py > video_to_tensor
+        b,c,t,h,w = frames.shape
+        if t > 1600:
+            features = []
+            for start in range(1, t-56, 1600):
+                end = min(t-1, start+1600+56)
+                start = max(1, start-48)
+                ip = Variable(torch.from_numpy(inputs.numpy()[:,:,start:end]), volatile=True)
+                features.append(i3d.extract_features(ip).squeeze(0).permute(1,2,3,0).data.numpy())
+        else:
+            # wrap them in Variable
+            inputs = Variable(inputs, volatile=True)
+            features = i3d.extract_features(inputs)
+
+        return features

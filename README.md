@@ -36,7 +36,7 @@
   - 1357
   - 1475
   - 1595
-  (TODO: Figure out how to deal with these)
+  (TODO: LATER -- Figure out how to deal with these)
 5. Pre-process the videos by running:
   ~~~
   python preprocess_msvdqa.py PSAC/MSVD-QA
