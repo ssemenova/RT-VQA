@@ -6,7 +6,7 @@ import tensorflow as tf
 class GRA(object):
     """Build graph for Gradually Refined Attention Network."""
 
-    def __init__(self, config):
+    def __init__(self, config, clip_num=None):
         """Init model."""
         self.word_dim = config['word_dim']
         self.vocab_num = config['vocab_num']
@@ -14,7 +14,12 @@ class GRA(object):
         self.appear_dim = config['appear_dim']
         self.frame_num = config['frame_num']
         self.motion_dim = config['motion_dim']
-        self.clip_num = config['clip_num']
+
+        if not clip_num:
+            self.clip_num = config['clip_num']
+        else:
+            self.clip_num = clip_num
+            
         self.common_dim = config['common_dim']
         self.answer_num = config['answer_num']
 

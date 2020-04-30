@@ -32,7 +32,7 @@ def parse_args():
 
     ## VIDEO PROCESSING VARIABLES ##
     # The size of a video chunk to cache
-    parser.add_argument('--chunk_size', type=int, default='20')
+    parser.add_argument('--chunk_size', type=int, default='10')
 
     ## C3D FEATURE EXTRACTION ##
     # Depending on how these variables are set, some video data
@@ -42,8 +42,7 @@ def parse_args():
     # potentially too much computation occurs with no benefit.
 
     # Amount of clips to create per chunk. Can be <= chunk_size
-    # Changing clip_num requires changing the VideoQA model
-    parser.add_argument('--clip_num_c3d', type=int, default='20')
+    parser.add_argument('--clip_num_c3d', type=int, default='5')
     # Frames per clip. Can be <= chunk_size
     parser.add_argument('--frames_per_clip_c3d', type=int, default='2')
 
@@ -208,7 +207,8 @@ def main():
         vqa_module = VQA(
             args.videoqa_config, 
             args.videoqa_model_path,
-            args.videoqa_vocab_path
+            args.videoqa_vocab_path,
+            args.clip_num_c3d
         )
         vqa_module.predict(question, cache)
         print("done")

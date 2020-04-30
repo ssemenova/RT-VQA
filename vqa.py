@@ -5,7 +5,7 @@ import pandas as pd
 import tensorflow as tf
 
 class VQA:
-  def __init__(self, config, checkpoint_dir, vocab_path):
+  def __init__(self, config, checkpoint_dir, vocab_path, clip_num):
     self.config = cfg.get('gra', 'msvd_qa', config, None)
     self.model_config = self.config['model']
     self.sess_config = self.config['session']
@@ -14,6 +14,7 @@ class VQA:
       "VideoQA/", self.config['preprocess_dir'], 'answer_set.txt'
     ), header=None)[0]
     self.vocab = pd.read_csv(vocab_path, header=None)[0]
+    self.clip_num = clip_num
 
   def predict(self, question, cache):
     for chunk_id in range(cache.oldest_id, cache.newest_id):
@@ -38,7 +39,7 @@ class VQA:
     question = self._encode_question(question)
 
     with tf.Graph().as_default():
-      model = GRA(self.model_config)
+      model = GRA(self.model_config, self.clip_num)
       model.pretrained_embedding = "VideoQA/" + model.pretrained_embedding
       model.build_inference()
 
