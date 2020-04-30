@@ -3,14 +3,21 @@ import os
 import sys
 import tensorflow as tf
 from PIL import Image
+import logging
 
 from feature_extractors import ChunkC3DExtractor, ChunkVGGExtractor, ChunkI3DExtractor
 
 
 class Chunk(object):
-  def __init__(self, cache, id, chunk_size, frames_per_clip, clip_num):
+  def __init__(
+          self, cache, id, chunk_size, 
+          frames_per_clip, clip_num,
+          i3d_extractor_model_path
+    ):
     self.cache = cache
     self.id = id
+
+    self.i3d_extractor_model_path = i3d_extractor_model_path
 
     # Feature extraction constants
     self.chunk_size = chunk_size
@@ -29,30 +36,29 @@ class Chunk(object):
     self.image_frames.append(Image.fromarray(frame))
 
   def commit(self):
-    print("Creating chunk #" + str(self.id))
+    logging.debug("Creating chunk #" + str(self.id))
 
     sess_config = tf.ConfigProto()
     sess_config.gpu_options.allow_growth = True
     sess_config.gpu_options.visible_device_list = '0'
     
-    print("C3D extractor...")
-    import pdb; pdb.set_trace()
+    logging.debug("C3D extractor...")
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
       c3d_extractor = ChunkC3DExtractor(
         self.clip_num, sess, self.frames_per_clip, self.chunk_size
       )
       self.c3d_features = c3d_extractor.extract(self.image_frames)
     
-    print("VGG extractor...")
+    logging.debug("VGG extractor...")
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
       vgg_extractor = ChunkVGGExtractor(
         self.clip_num, sess, self.chunk_size
       )
       self.vgg_features = vgg_extractor.extract(self.image_frames)
 
-    print("I3D extractor...")
-    i3d_extractor = ChunkI3DExtractor()
-    self.i3d_features = i3d_extractor.extract(self.image_frames)
+    #print("I3D extractor...")
+    #i3d_extractor = ChunkI3DExtractor(self.i3d_extractor_model_path)
+    #self.i3d_features = i3d_extractor.extract(self.image_frames)
 
     self.cache.insert(self)
 

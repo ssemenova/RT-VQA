@@ -16,10 +16,10 @@ class Vgg16:
             path = os.path.abspath(os.path.join(path, os.pardir))
             path = os.path.join(path, "vgg16.npy")
             vgg16_npy_path = path
-            print(path)
+            #print(path)
 
         self.data_dict = np.load(vgg16_npy_path, encoding='latin1', allow_pickle=True).item()
-        print("npy file loaded")
+        #print("npy file loaded")
 
     def build(self, rgb):
         """
@@ -28,7 +28,7 @@ class Vgg16:
         """
 
         start_time = time.time()
-        print("build model started")
+        #print("build model started")
 
         # Convert RGB to BGR
         red, green, blue = tf.split(
@@ -78,7 +78,7 @@ class Vgg16:
         self.prob = tf.nn.softmax(self.fc8, name="prob")
 
         self.data_dict = None
-        print(("build model finished: %ds" % (time.time() - start_time)))
+        #print(("build model finished: %ds" % (time.time() - start_time)))
 
     def avg_pool(self, bottom, name):
         return tf.nn.avg_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)

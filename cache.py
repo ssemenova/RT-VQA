@@ -32,6 +32,9 @@ class Cache(object):
   def _connect(self):
     return sqlite3.connect(db_name + '.db')
 
+  def size(self):
+      return str(self.oldest_id - self.newest_id)
+
   def insert(self, chunk):
     if self.use_ram:
       self.db.update({

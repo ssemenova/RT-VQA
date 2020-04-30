@@ -3,6 +3,7 @@ import cv2
 import time
 import threading
 import sys
+import logging
 
 from chunk import Chunk
 from cache import Cache
@@ -31,7 +32,7 @@ def parse_args():
 
     ## VIDEO PROCESSING VARIABLES ##
     # The size of a video chunk to cache
-    parser.add_argument('--chunk_size', type=int, default='10')
+    parser.add_argument('--chunk_size', type=int, default='20')
 
     ## C3D FEATURE EXTRACTION ##
     # Depending on how these variables are set, some video data
@@ -41,13 +42,14 @@ def parse_args():
     # potentially too much computation occurs with no benefit.
 
     # Amount of clips to create per chunk. Can be <= chunk_size
-    parser.add_argument('--clip_num_c3d', type=int, default='5')
+    # Changing clip_num requires changing the VideoQA model
+    parser.add_argument('--clip_num_c3d', type=int, default='20')
     # Frames per clip. Can be <= chunk_size
     parser.add_argument('--frames_per_clip_c3d', type=int, default='2')
 
     ## VIDEO QA VARIABLES ##
     # "Config_id" for VideoQA in config.py
-    parser.add_argument('--videoqa_config', type=int, default='0')
+    parser.add_argument('--videoqa_config', type=str, default='0')
     # Path to the VideoQA model. This default is what generates when
     # you run the run_gra command in the VideoQA directory. If you train
     # the model by running a different VideoQA command, this might be in
@@ -55,7 +57,10 @@ def parse_args():
     parser.add_argument(
         '--videoqa_model_path', type=str, default='VideoQA/log/evqa'
     )
-
+    parser.add_argument(
+        '--videoqa_vocab_path', type=str, 
+        default='VideoQA/data/msvd_qa/vocab.txt'
+    )
 
     # TMLGA VARIABLES ##
     parser.add_argument('--config_file_path', type=str, default='0')
@@ -67,6 +72,10 @@ def parse_args():
         '--embeddings_file_path', type=str,
         default="TMLGA/charades_embeddings_1_30.pth"
     )
+    parser.add_argument(
+        '--i3d_extractor_model_path', type=str,
+        default="pytorch_i3d/models/rgb_imagenet.pt"
+    )
     parser.add_argument('--max_question_length', type=int, default='30')
     parser.add_argument('--min_question_length', type=int, default='3')
 
@@ -76,7 +85,9 @@ def parse_args():
 
 
 def process_video(
-    video_name, chunk_size, cache, frames_per_clip_c3d, clip_num_c3d
+    video_name, chunk_size, cache, 
+    frames_per_clip_c3d, clip_num_c3d,
+    i3d_extractor_model_path
 ):
     # TODO: LATER-- replace this with something more real-time
     # and not frame-by-frame
@@ -90,7 +101,8 @@ def process_video(
     frame_count = 0
     current_chunk = Chunk(
         cache, chunk_count, chunk_size,
-        frames_per_clip_c3d, clip_num_c3d
+        frames_per_clip_c3d, clip_num_c3d,
+        i3d_extractor_model_path
     )
 
     while True:
@@ -98,19 +110,20 @@ def process_video(
         if flag:
             pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
             
-            print("processing frame #" + str(pos_frame))
+            logging.info("processing frame #" + str(pos_frame))
             if frame_count == chunk_size:
-                print("finishing chunk #" + str(chunk_count))
+                logging.debug("finishing chunk #" + str(chunk_count))
                 # TODO: Run this in a new thread and not concurrently
                 running_threads.update({
                     chunk_count: current_chunk.commit()
                 })
-                current_chunk = Chunk(
-                    cache, chunk_count, chunk_size,
-                    frames_per_clip_c3d, clip_num_c3d
-                )
                 chunk_count += 1
                 frame_count = 0
+                current_chunk = Chunk(
+                    cache, chunk_count, chunk_size,
+                    frames_per_clip_c3d, clip_num_c3d,
+                    i3d_extractor_model_path
+                )
             else:
                 current_chunk.add_frame(frame, frame_count)
 
@@ -127,19 +140,6 @@ def process_video(
     pass
 
 
-def ask_questions(chunk_localization, cache, videoqa_config, videoqa_model_path):
-    # TODO: process user input
-    question = "???"
-
-    relevant_chunk = chunk_localization.predict(cache, question)
-
-    vqa_module = VQA(videoqa_config, videoqa_model_path)
-    # TODO: encode question (Can I use the encoding from chunk_localization?)
-    vqa_module.predict(question, relevant_chunk)
-
-    pass
-
-
 def kill_old_threads(cache):
     while True:
         ids_to_kill = [(k, v) for k, v in running_threads.items() if k < cache.oldest_id]
@@ -150,8 +150,9 @@ def kill_old_threads(cache):
 
 
 def main():
+    logging.basicConfig(filename='VQA.log',level=logging.DEBUG)
     args = parse_args()
-
+    
     cache = Cache(
         args.database_name,
         args.cache_size,
@@ -159,16 +160,17 @@ def main():
         args.use_ram,
     )
 
-    chunk_localization = Chunk_Localization(
-        args.config_file_path,
-        args.vocab_file_path,
-        args.embeddings_file_path,
-        args.max_question_length,
-        args.min_question_length,
-        args.chunk_size
-    )
+    #chunk_localization = Chunk_Localization(
+    #    args.config_file_path,
+    #    args.vocab_file_path,
+    #    args.embeddings_file_path,
+    #    args.max_question_length,
+    #    args.min_question_length,
+    #    args.chunk_size
+    #)
 
-    print("Made cache")
+    print("Setup done")
+    
     # Run threads
     process_video_thread = threading.Thread(
       target=process_video, args=(
@@ -176,26 +178,40 @@ def main():
           args.chunk_size,
           cache,
           args.frames_per_clip_c3d,
-          args.clip_num_c3d
+          args.clip_num_c3d,
+          args.i3d_extractor_model_path
         )
     )
-    ask_questions_thread = threading.Thread(
-        target=ask_questions, args=(
-            chunk_localization,
-            cache,
-            args.videoqa_config,
-            args.videoqa_model_path
-        )
-    )
+    process_video_thread.daemon = True
+
     kill_old_threads_thread = threading.Thread(
         target=kill_old_threads, args=(cache,)
     )
 
     process_video_thread.start()
-    ask_questions_thread.start()
-    kill_old_threads_thread.start()
-
+    #kill_old_threads_thread.start()
+    
     while True:
-        continue
+        print("==============")
+
+        question = input("Enter a question \n")
+        sys.stdout.flush()
+
+        if question == "quit":
+            exit()
+        
+        print("Question = " + question)
+        print("Chunks in cache = " + cache.size())
+        
+        #relevant_chunk = chunk_localization.predict(cache, question)
+        
+        vqa_module = VQA(
+            args.videoqa_config, 
+            args.videoqa_model_path,
+            args.videoqa_vocab_path
+        )
+        vqa_module.predict(question, cache)
+        print("done")
+
 
 main()

@@ -1,4 +1,5 @@
 import inspect
+import torch
 import numpy as np
 import tensorflow as tf
 import os
@@ -108,9 +109,10 @@ class ChunkC3DExtractor(object):
 class ChunkI3DExtractor():
     # TODO: later: might be worth removing i3d extraction and training
     # TMLGA on just c3d features
-    def __init__():
+    def __init__(self, model):
         self.max_steps = 64e3
         self.mode = 'rgb'
+        self.model = model
 
     def _convert_frames(self, frames):
         # TODO: later: this might not be necessary to do
@@ -119,25 +121,21 @@ class ChunkI3DExtractor():
         # feature extractors, and avoid doing it twice
         new_frames = []
         for i in range(len(frames)):
-            img = frames[i]
-            w,h,c = img.shape
-            if w < 226 or h < 226:
-                d = 226.-min(w,h)
-                sc = 1+d/min(w,h)
-                img = cv2.resize(img,dsize=(0,0),fx=sc,fy=sc)
+            img = np.array(frames[i])
             img = (img/255.)*2 - 1
             new_frames.append(img)
-
+        import pdb; pdb.set_trace()
         return torch.from_numpy(
-            np.asarray(frames, dtype=np.float32).transpose([3, 0, 1, 2])
+            np.asarray(new_frames, dtype=np.float32).transpose([3, 0, 1, 2])
         )
 
     def extract(self, frames):
         frames = self._convert_frames(frames)
 
+        import pdb; pdb.set_trace()
         i3d = InceptionI3d(400, in_channels=3)
-        i3d.replace_logits(157)
-        i3d.load_state_dict(torch.load(load_model))
+        #i3d.replace_logits(157)
+        i3d.load_state_dict(torch.load(self.model))
 
         i3d.train(False)
 

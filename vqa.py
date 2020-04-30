@@ -1,20 +1,48 @@
 from VideoQA.model.gra import GRA
 import VideoQA.config as cfg
+import os
+import pandas as pd
+import tensorflow as tf
 
 class VQA:
-  def __init__(self, config, checkpoint_dir):
-    self.config = cfg.get('gra', 'data/msvd_qa', config, None)
+  def __init__(self, config, checkpoint_dir, vocab_path):
+    self.config = cfg.get('gra', 'msvd_qa', config, None)
     self.model_config = self.config['model']
     self.sess_config = self.config['session']
     self.checkpoint_dir = os.path.join(checkpoint_dir, 'checkpoint')
     self.answerset = pd.read_csv(os.path.join(
-      self.config['preprocess_dir'], 'answer_set.txt'
+      "VideoQA/", self.config['preprocess_dir'], 'answer_set.txt'
     ), header=None)[0]
+    self.vocab = pd.read_csv(vocab_path, header=None)[0]
 
-  def predict(self, question, chunk):
+  def predict(self, question, cache):
+    for chunk_id in range(cache.oldest_id, cache.newest_id):
+        self._predict(question, cache[chunk_id])
+
+  def _encode_question(self, question):
+    """Map question to sequence of vocab id. 3999 for word not in vocab."""
+    question_id = ''
+    words = question.rstrip('?').split()
+    for word in words:
+        if word in self.vocab.values:
+            question_id = question_id + \
+                str(self.vocab[self.vocab == word].index[0]) + ','
+        else:
+            question_id = question_id + '3999' + ','
+
+    question_id = question_id.rstrip(',')
+    question = [int(x) for x in question_id.split(',')]
+    return question
+
+  def _predict(self, question, chunk):
+    question = self._encode_question(question)
+
     with tf.Graph().as_default():
-      model = GRA(model_config)
+      model = GRA(self.model_config)
+      model.pretrained_embedding = "VideoQA/" + model.pretrained_embedding
       model.build_inference()
+
+      sess_config = self.config['session']
 
       with tf.Session(config=sess_config) as sess:
         save_path = tf.train.latest_checkpoint(self.checkpoint_dir)
@@ -40,6 +68,6 @@ class VQA:
         channel_weight = channel_weight[0]
         appear_weight = appear_weight[0]
         motion_weight = motion_weight[0]
-        answer = answerset[prediction]
+        answer = self.answerset[prediction]
 
     return answer

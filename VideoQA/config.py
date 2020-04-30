@@ -179,7 +179,7 @@ def get(model, dataset, config_id, gpu_list):
 
     sess_config = tf.ConfigProto()
     sess_config.gpu_options.allow_growth = True
-    sess_config.gpu_options.visible_device_list = gpu_list
+    #sess_config.gpu_options.visible_device_list = gpu_list
     config['session'] = sess_config
 
     return config
