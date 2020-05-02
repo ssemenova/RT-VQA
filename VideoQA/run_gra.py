@@ -198,6 +198,7 @@ def test(dataset, config, log_dir):
                     model.motion: [c3d],
                     model.question_encode: [question],
                 }
+                import pdb; pdb.set_trace()
                 prediction,  channel_weight, appear_weight, motion_weight = sess.run(
                     [model.prediction, model.channel_weight, model.appear_weight, model.motion_weight], feed_dict=feed_dict)
                 prediction = prediction[0]

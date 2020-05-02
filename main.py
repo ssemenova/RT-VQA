@@ -4,6 +4,8 @@ import time
 import threading
 import sys
 import logging
+import random
+import os
 
 from chunk import Chunk
 from cache import Cache
@@ -17,7 +19,15 @@ running_threads = {}
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    # Enter either 'video_dir' or 'video_name'.
+    # Using a video_dir will run a random interleaving of videos in
+    # the directory, using a video_name will just run the video.
+    parser.add_argument(
+        '--video_dir', type=str,  default='VideoQA/MSVD-QA/video/'
+    )
     parser.add_argument('--video_name', type=str, default='./out.mp4')
+
+
     parser.add_argument('--database_name', type=str, default='vqadb')
 
     ## CACHE VARIABLES ##
@@ -82,28 +92,41 @@ def parse_args():
     args = parser.parse_args()
     return args    
 
-
-def process_video(
-    video_name, chunk_size, cache, 
-    frames_per_clip_c3d, clip_num_c3d,
-    i3d_extractor_model_path
-):
-    # TODO: LATER-- replace this with something more real-time
-    # and not frame-by-frame
+def _open_video(video_name):
     cap = cv2.VideoCapture(video_name)
     while not cap.isOpened():
         cap = cv2.VideoCapture(video_name)
         cv2.waitKey(1000)
+    return cap
+
+
+def process_video(
+    chunk_size, cache, 
+    frames_per_clip_c3d, clip_num_c3d,
+    i3d_extractor_model_path,
+    video_name=False,
+    video_dir=False
+):
+
+    # TODO: LATER-- replace this with something more real-time
+    # and not frame-by-frame
+    if video_name:
+        cap = _open_video(video_name)
+    else:
+        interleaving = _create_video_interleaving(video_dir)
+        cap = _open_video(video_dir + "/" + interleaving[0])
 
     pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
+    
     chunk_count = 0
     frame_count = 0
+    video_count = 0
     current_chunk = Chunk(
         cache, chunk_count, chunk_size,
         frames_per_clip_c3d, clip_num_c3d,
         i3d_extractor_model_path
     )
-
+    import pdb; pdb.set_trace()
     while True:
         flag, frame = cap.read()
         if flag:
@@ -135,8 +158,11 @@ def process_video(
         if cv2.waitKey(10) == 27:
             break
         if cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT):
-            break
-    pass
+            video_count += 1
+            if video_count < len(interleaving):
+                cap = _open_video(video_dir + "/" + interleaving[video_count])
+            else:
+                break
 
 
 def kill_old_threads(cache):
@@ -146,6 +172,15 @@ def kill_old_threads(cache):
             running_threads.get(id).stop()
 
         time.sleep(10)
+
+
+def _create_video_interleaving(video_directory):
+    interleaving = []
+    for f in os.listdir(video_directory):
+      interleaving.append(f)
+    
+    random.shuffle(interleaving)
+    return interleaving
 
 
 def main():
@@ -171,47 +206,55 @@ def main():
     print("Setup done")
     
     # Run threads
-    process_video_thread = threading.Thread(
-      target=process_video, args=(
-          args.video_name,
-          args.chunk_size,
-          cache,
-          args.frames_per_clip_c3d,
-          args.clip_num_c3d,
-          args.i3d_extractor_model_path
-        )
-    )
-    process_video_thread.daemon = True
+    #process_video_thread = threading.Thread(
+    #  target=process_video, args=(
+    #      args.chunk_size,
+    #      cache,
+    #      args.frames_per_clip_c3d,
+    #      args.clip_num_c3d,
+    #      args.i3d_extractor_model_path,
+    #      video_dir=args.video_dir,
+    #    )
+    #)
+    #process_video_thread.daemon = True
 
     kill_old_threads_thread = threading.Thread(
         target=kill_old_threads, args=(cache,)
     )
 
-    process_video_thread.start()
-    #kill_old_threads_thread.start()
+    #process_video_thread.start()
+    kill_old_threads_thread.start()
     
-    while True:
-        print("==============")
+    process_video(
+            args.chunk_size,
+            cache,
+            args.frames_per_clip_c3d,
+            args.clip_num_c3d,
+            args.i3d_extractor_model_path,
+            video_dir=args.video_dir
+    )
+#    while True:
+#        print("==============")
+#        continue    
+        #question = input("Enter a question \n")
+        #sys.stdout.flush()
 
-        question = input("Enter a question \n")
-        sys.stdout.flush()
-
-        if question == "quit":
-            exit()
+        #if question == "quit":
+        #    exit()
         
-        print("Question = " + question)
-        print("Chunks in cache = " + cache.size())
+        #print("Question = " + question)
+        #print("Chunks in cache = " + cache.size())
         
         #relevant_chunk = chunk_localization.predict(cache, question)
         
-        vqa_module = VQA(
-            args.videoqa_config, 
-            args.videoqa_model_path,
-            args.videoqa_vocab_path,
-            args.clip_num_c3d
-        )
-        vqa_module.predict(question, cache)
-        print("done")
+        #vqa_module = VQA(
+        #    args.videoqa_config, 
+        #    args.videoqa_model_path,
+        #    args.videoqa_vocab_path,
+        #    args.clip_num_c3d
+        #)
+        #vqa_module.predict(question, cache)
+        #print("done")
 
 
 main()
