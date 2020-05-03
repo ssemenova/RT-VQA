@@ -10,11 +10,10 @@ from feature_extractors import ChunkC3DExtractor, ChunkVGGExtractor, ChunkI3DExt
 
 class Chunk(object):
   def __init__(
-          self, cache, id, chunk_size, 
+          self, id, chunk_size, 
           frames_per_clip, clip_num,
           i3d_extractor_model_path
     ):
-    self.cache = cache
     self.id = id
 
     self.i3d_extractor_model_path = i3d_extractor_model_path
@@ -35,7 +34,7 @@ class Chunk(object):
   def add_frame(self, frame, frame_count):
     self.image_frames.append(Image.fromarray(frame))
 
-  def commit(self):
+  def generate_features(self):
     logging.debug("Creating chunk #" + str(self.id))
 
     sess_config = tf.ConfigProto()
@@ -60,8 +59,6 @@ class Chunk(object):
     #print("I3D extractor...")
     #i3d_extractor = ChunkI3DExtractor(self.i3d_extractor_model_path)
     #self.i3d_features = i3d_extractor.extract(self.image_frames)
-
-    self.cache.insert(self)
 
     del self.image_frames
     gc.collect()

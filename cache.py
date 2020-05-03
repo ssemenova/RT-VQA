@@ -1,4 +1,5 @@
 import sqlite3
+from chunk import Chunk
 
 class Cache(object):
   def __init__(self, db_name, cache_size, evict_mod, use_ram):
@@ -8,6 +9,9 @@ class Cache(object):
 
     self.oldest_id = 0
     self.newest_id = 0
+
+    self.current_id = 1
+    self.current_chunk = None
 
     if use_ram:
       self.db = {}
@@ -32,8 +36,28 @@ class Cache(object):
   def _connect(self):
     return sqlite3.connect(db_name + '.db')
 
+  def new_chunk(
+    self, chunk_size, frames_per_clip_c3d, 
+    clip_num_c3d, i3d_extractor_model_path
+  ):
+    import pdb; pdb.set_trace()
+    self.current_chunk = Chunk(
+      self.current_id, chunk_size,
+      frames_per_clip_c3d, clip_num_c3d,
+      i3d_extractor_model_path
+    )
+
+    self.current_id +=1
+
+  def commit(self):
+      self.current_chunk.generate_features()
+      self.insert(current_chunk)
+
+  def force_chunk(self):
+    self.current_chunk.commit()
+
   def size(self):
-      return str(self.oldest_id - self.newest_id)
+    return str(self.oldest_id - self.newest_id)
 
   def insert(self, chunk):
     if self.use_ram:

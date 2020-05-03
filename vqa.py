@@ -3,6 +3,7 @@ import VideoQA.config as cfg
 import os
 import pandas as pd
 import tensorflow as tf
+import time
 
 class VQA:
   def __init__(self, config, checkpoint_dir, vocab_path, clip_num):
@@ -17,6 +18,11 @@ class VQA:
     self.clip_num = clip_num
 
   def predict(self, question, cache):
+    # If there are no chunks, wait a little and then force a chunk
+    if cache.newest_id == 0:
+        time.sleep(3)
+        cache.force_chunk()
+
     for chunk_id in range(cache.oldest_id, cache.newest_id):
         self._predict(question, cache[chunk_id])
 
