@@ -141,7 +141,6 @@ class MSVDQA(object):
 
     def get_test_example(self):
         """Get one test example. Only question is converted to int."""
-        import pdb; pdb.set_trace()
         example_id = self.test_qa.iloc[self.test_example_idx]['id']
         question_encode = self.test_qa.iloc[
             self.test_example_idx]['question_encode']

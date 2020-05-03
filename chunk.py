@@ -56,6 +56,7 @@ class Chunk(object):
       )
       self.vgg_features = vgg_extractor.extract(self.image_frames)
 
+    #Not currently implemented.
     #print("I3D extractor...")
     #i3d_extractor = ChunkI3DExtractor(self.i3d_extractor_model_path)
     #self.i3d_features = i3d_extractor.extract(self.image_frames)
