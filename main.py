@@ -6,6 +6,7 @@ import sys
 import logging
 import random
 import os
+import pandas as pd
 
 from chunk import Chunk
 from cache import Cache
@@ -94,13 +95,46 @@ def parse_args():
     return args    
 
 
-def _create_video_interleaving(video_directory):
-    interleaving = []
+def _create_test(video_directory):
+    interleaving_temp = []
+    test_qa = pd.read_json('VideoQA/MSVD-QA/test_qa.json')
+
     for f in os.listdir(video_directory):
-      interleaving.append(f)
+        video_id = f.strip('YouTubeClipsvid.a')
+        print(video_id)
+        if video_id:
+            interleaving_temp.append(video_id)
     
-    random.shuffle(interleaving)
-    return interleaving
+    random.shuffle(interleaving_temp)
+
+    questions = []
+    interleaving = []
+   
+    import pdb; pdb.set_trace()
+    for video_id in interleaving_temp:
+        relevant_qs = test_qa[test_qa.video_id == int(video_id)]
+        relevant_qs_len = len(relevant_qs)
+        if relevant_qs_len != 0:
+            sample_size = random.randint(
+                0, relevant_qs_len
+            )
+            sampled_q_ids = random.sample(
+                range(relevant_qs_len),
+                k=sample_size
+            )
+            sampled_qs = []
+    
+            for question in sampled_q_ids:
+                sampled_qs.append(
+                    relevant_qs.iloc[question].question
+                )
+    
+            questions.append(sampled_qs)
+            interleaving_temp.append(
+                'YouTubeClipsvid' + video_id + '.avi'
+            )
+ 
+    return interleaving, questions
 
 
 def _open_video(video_name):
@@ -114,9 +148,6 @@ def _open_video(video_name):
 def _commit_current_chunk(chunk):
     return chunk.commit()
 
-def _create_video_interleaving(interleaving):
-    test_qa = pd.read_json('VideoQA/MSVD-QA/test_qa.json')
-    import pdb; pdb.set_trace()
 
 def process_video(
     chunk_size, cache, 
@@ -209,9 +240,9 @@ def main():
         args.use_ram,
     )
 
-    interleaving = _create_video_interleaving(args.video_dir)
-    questions = _create_video_questions(interleaving)
+    interleaving, questions = _create_test(args.video_dir)
 
+    import pdb; pdb.set_trace()
     # Not currently used.
     #chunk_localization = Chunk_Localization(
     #    args.config_file_path,
