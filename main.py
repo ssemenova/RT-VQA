@@ -69,7 +69,7 @@ def parse_args():
     # Amount of clips to create per chunk. Can be <= chunk_size
     parser.add_argument('--clip_num_c3d', type=int, default='5')
     # Frames per clip. Can be <= chunk_size
-    parser.add_argument('--frames_per_clip_c3d', type=int, default='5')
+    parser.add_argument('--frames_per_clip_c3d', type=int, default='10')
 
     ## VIDEO QA VARIABLES ##
     # "Config_id" for VideoQA in config.py
@@ -221,6 +221,8 @@ def process_video(
     starttime=time.time()
 
     print("Playing videos...")
+    print("==============")
+    
     while True:
         flag, frame = cap.read()
         if flag:
@@ -242,7 +244,6 @@ def process_video(
                 get_features_thread.start()
                
                 frame_count = 0
-                print(cache.newest_id)
                 cache.new_chunk(
                     chunk_size,
                     frames_per_clip_c3d,
@@ -251,11 +252,11 @@ def process_video(
                 )
 
                 chunk_count += 1
-                time.sleep(100000)
             else:
                 cache.db.get(chunk_count).add_frame(
                     frame, frame_count
                 )
+                time.sleep(.2 - ((time.time() - starttime) % .2))
 
             frame_count += 1
         else:
@@ -263,7 +264,6 @@ def process_video(
             print("frame is not ready")
             cv2.waitKey(1000)
 
-        time.sleep(.25 - ((time.time() - starttime) % .25))
         if cv2.waitKey(10) == 27:
             break
         if cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT):
@@ -290,7 +290,9 @@ def ask_questions(args, questions):
 
     question_count = 0
     time.sleep(10)
-   
+  
+    correct = 0
+
     vqa_module = VQA(
         args.videoqa_config,
         args.videoqa_model_path,
@@ -326,11 +328,15 @@ def ask_questions(args, questions):
         # relevant_chunk = chunk_localization.predict(cache, question)
         
             print("Asking question = " + str(question[0]))
-            import pdb; pdb.set_trace()
             answer = vqa_module.predict(question[0], cache)
-        
-
+            
+            if answer == question[1]:
+                correct += 1
+            print("Answer = " + str(answer) + "; Correct answer = " + question[1])
+            
             question_count += 1
+            
+            print("CORRECT = " + str(correct) + "; TOTAL = " + str(question_count))
             time.sleep(5)
 
 
@@ -364,7 +370,6 @@ def main():
     #)
 
     print("Setup done.")
-    print("==============")
     
     process_video(
         args.chunk_size,

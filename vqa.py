@@ -22,7 +22,7 @@ class VQA:
     while cache.newest_id == 0:
         time.sleep(5)
 
-    self._predict(question, cache.db[1])
+    return self._predict(question, cache.db[1])
     #for chunk_id in range(cache.newest_id, cache.oldest_id, -1):
     #    self._predict(question, cache.db[chunk_id])
 
@@ -44,7 +44,7 @@ class VQA:
   def _predict(self, question, chunk):
     question = self._encode_question(question)
 
-    self.model_config['frame_num'] = chunk.frame_num
+    self.model_config['frame_num'] = chunk.clip_num
     with tf.Graph().as_default():
       model = GRA(self.model_config, chunk.clip_num)
       model.pretrained_embedding = "VideoQA/" + model.pretrained_embedding
@@ -79,5 +79,4 @@ class VQA:
         appear_weight = appear_weight[0]
         motion_weight = motion_weight[0]
         answer = self.answerset[prediction]
-
-    return answer
+        return answer
