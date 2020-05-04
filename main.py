@@ -34,7 +34,7 @@ def parse_args():
     # dictate how many videos to play during the test. Default is set
     # to 502 because that's how many videos are in the MSVD-QA test
     # dataset.
-    parser.add_argument('--test_length', type=int, default='502')
+    parser.add_argument('--test_length', type=int, default='20')
     # If using 'video_dir', optionally pass in the option to filter 
     # out large videos. Not good for real testing, but useful for 
     # if you need to play the videos through X11.
@@ -47,11 +47,11 @@ def parse_args():
     )
     ## CACHE VARIABLES ##
     # Cache size (in terms of chunks)
-    parser.add_argument('--cache_size', type=int, default='10')
+    parser.add_argument('--cache_size', type=int, default='5')
     # How often to evict (in terms of chunks). A lower number 
     # (more frequent evictions) means the chunk creation and 
     # cache insertion process takes longer.
-    parser.add_argument('--evict_mod', type=int, default='10')
+    parser.add_argument('--evict_mod', type=int, default='1')
     # Whether to use RAM for the cache
     parser.add_argument('--use_ram', action='store_true')
 
@@ -67,9 +67,9 @@ def parse_args():
     # potentially too much computation occurs with no benefit.
 
     # Amount of clips to create per chunk. Can be <= chunk_size
-    parser.add_argument('--clip_num_c3d', type=int, default='5')
+    parser.add_argument('--clip_num_c3d', type=int, default='2')
     # Frames per clip. Can be <= chunk_size
-    parser.add_argument('--frames_per_clip_c3d', type=int, default='10')
+    parser.add_argument('--frames_per_clip_c3d', type=int, default='5')
 
     ## VIDEO QA VARIABLES ##
     # "Config_id" for VideoQA in config.py
@@ -142,7 +142,7 @@ def _create_test(
             video_len = v.get(cv2.CAP_PROP_POS_MSEC)
             
             video_width = v.get(cv2.CAP_PROP_FRAME_WIDTH)
-            if filter_large_videos and video_width < 800: 
+            if filter_large_videos and video_width < 600: 
                 sample_max = int(min(relevant_qs_len, video_len / 3))
                 sample_size = random.randint(
                     1, sample_max
@@ -256,7 +256,7 @@ def process_video(
                 cache.db.get(chunk_count).add_frame(
                     frame, frame_count
                 )
-                time.sleep(.2 - ((time.time() - starttime) % .2))
+                time.sleep(.1 - ((time.time() - starttime) % .1))
 
             frame_count += 1
         else:
@@ -313,7 +313,7 @@ def ask_questions(args, questions):
         # Ask questions about the past 5 videos for now
         random.seed()
         random_video_index = random.randint(
-            max(video_count - 5, 0), 
+            max(video_count - 3, 0), 
             max(video_count - 1, 0)
         )
         if len(questions[random_video_index]) != 0:

@@ -17,14 +17,33 @@ class VQA:
     self.vocab = pd.read_csv(vocab_path, header=None)[0]
     self.clip_num = clip_num
 
+    self.model_config['frame_num'] = self.clip_num
+    with tf.Graph().as_default():
+        self.model = GRA(self.model_config, self.clip_num)
+        self.model.pretrained_embedding = "VideoQA/" + self.model.pretrained_embedding
+        self.model.build_inference()
+
+        sess_config = self.config['session']
+
+        self.sess = tf.Session(config=sess_config)
+        save_path = tf.train.latest_checkpoint(self.checkpoint_dir)
+        saver = tf.train.Saver()
+        if save_path:
+            #print('load checkpoint {}.'.format(save_path))
+            saver.restore(self.sess, save_path)
+        else:
+            #print('no checkpoint.')
+            return None
+
   def predict(self, question, cache):
     # If there are no chunks, wait a little
     while cache.newest_id == 0:
         time.sleep(5)
 
-    return self._predict(question, cache.db[1])
-    #for chunk_id in range(cache.newest_id, cache.oldest_id, -1):
-    #    self._predict(question, cache.db[chunk_id])
+    min_chunk_id = max(cache.newest_id - 4, 0)
+    max_chunk_id = cache.newest_id
+    for chunk_id in range(max_chunk_id, min_chunk_id, -1):
+        self._predict(question, cache.db[chunk_id])
 
   def _encode_question(self, question):
     """Map question to sequence of vocab id. 3999 for word not in vocab."""
@@ -44,39 +63,22 @@ class VQA:
   def _predict(self, question, chunk):
     question = self._encode_question(question)
 
-    self.model_config['frame_num'] = chunk.clip_num
-    with tf.Graph().as_default():
-      model = GRA(self.model_config, chunk.clip_num)
-      model.pretrained_embedding = "VideoQA/" + model.pretrained_embedding
-      model.build_inference()
+    feed_dict = {
+        self.model.appear: [chunk.vgg_features],
+        self.model.motion: [chunk.c3d_features],
+        self.model.question_encode: [question],
+    }
+    prediction, channel_weight, appear_weight, motion_weight = self.sess.run(
+        [self.model.prediction, self.model.channel_weight,
+        self.model.appear_weight, self.model.motion_weight],
+        feed_dict=feed_dict
+    )
 
-      sess_config = self.config['session']
-
-      with tf.Session(config=sess_config) as sess:
-        save_path = tf.train.latest_checkpoint(self.checkpoint_dir)
-        saver = tf.train.Saver()
-        if save_path:
-            print('load checkpoint {}.'.format(save_path))
-            saver.restore(sess, save_path)
-        else:
-            print('no checkpoint.')
-            return None
-
-        feed_dict = {
-            model.appear: [chunk.vgg_features],
-            model.motion: [chunk.c3d_features],
-            model.question_encode: [question],
-        }
-        prediction, channel_weight, appear_weight, motion_weight = sess.run(
-            [model.prediction, model.channel_weight,
-            model.appear_weight, model.motion_weight],
-            feed_dict=feed_dict
-        )
-
-        print(chunk.id, prediction, channel_weight, appear_weight, motion_weight)
-        prediction = prediction[0]
-        channel_weight = channel_weight[0]
-        appear_weight = appear_weight[0]
-        motion_weight = motion_weight[0]
-        answer = self.answerset[prediction]
-        return answer
+    print(chunk.id, prediction, channel_weight, appear_weight, motion_weight)
+    prediction = prediction[0]
+    channel_weight = channel_weight[0]
+    appear_weight = appear_weight[0]
+    motion_weight = motion_weight[0]
+    answer = self.answerset[prediction]
+    print(answer)
+    return answer
