@@ -1,4 +1,5 @@
 import sqlite3
+import logging
 from chunk import Chunk
 
 class Cache(object):
@@ -36,9 +37,9 @@ class Cache(object):
   def _connect(self):
     return sqlite3.connect(db_name + '.db')
 
-  def commit(self):
-    self.current_chunk.generate_features()
-    self.newest_id = self.current_chunk.id
+  def commit(self, chunk_id):
+    self.db.get(chunk_id).generate_features()
+    self.newest_id = chunk_id
 
   def new_chunk(
     self, chunk_size, frames_per_clip_c3d, 

@@ -31,12 +31,14 @@ class Chunk(object):
 
     # Image frames of all images in this video chunk
     self.image_frames = list()
+    self.frame_num = 0
 
     # Set to True once features are generated
     self.complete = False
 
   def add_frame(self, frame, frame_count):
     self.image_frames.append(Image.fromarray(frame))
+    self.frame_num = len(self.image_frames)
 
   def generate_features(self):
     logging.debug("Creating chunk #" + str(self.id))
@@ -47,10 +49,10 @@ class Chunk(object):
    
     # Potentially adjust frames_per_clip and clip_num - 
     # a question could be submitted before a chunk is finished
-    if self.frames_per_clip * self.clip_num > len(self.image_frames):
-        self.clip_num = math.floor(
-            len(self.image_frames) / self.frames_per_clip
-        )
+    #if self.frames_per_clip * self.clip_num > len(self.image_frames):
+    #    self.clip_num = math.floor(
+    #        len(self.image_frames) / self.frames_per_clip
+    #    )
 
     logging.debug("Chunk " + str(self.id) + " C3D extractor...")
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
@@ -59,13 +61,14 @@ class Chunk(object):
       )
       self.c3d_features = c3d_extractor.extract(self.image_frames)
     
-    logging.debug("Chunk " + str(self.id) + "VGG extractor...")
+    logging.debug("Chunk " + str(self.id) + " VGG extractor...")
     with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
       vgg_extractor = ChunkVGGExtractor(
         self.clip_num, sess, self.chunk_size
       )
       self.vgg_features = vgg_extractor.extract(self.image_frames)
 
+    logging.debug("Done with chunk " + str(self.id))
     #Not currently implemented.
     #print("I3D extractor...")
     #i3d_extractor = ChunkI3DExtractor(self.i3d_extractor_model_path)

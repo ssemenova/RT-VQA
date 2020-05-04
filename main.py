@@ -16,6 +16,7 @@ from other import StoppableThread
 
 
 video_count = 0
+cache = None
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -174,15 +175,13 @@ def _open_video(video_name):
     return cap
 
 
-def _commit_current_chunk():
+def _get_features(chunk_id):
     global cache
-    cache.commit()
-    logging.debug("in thread ")
-    logging.debug(cache.db)
-
+    cache.commit(chunk_id)
+    logging.debug(cache.newest_id)
 
 def process_video(
-    chunk_size, cache, 
+    chunk_size, 
     frames_per_clip_c3d, clip_num_c3d,
     i3d_extractor_model_path,
     video_name,
@@ -192,6 +191,7 @@ def process_video(
     args, questions # TODO - maybe don't pass these in here
 ):
     global video_count
+    global cache
 
     # TODO: LATER-- replace this with something more real-time
     # and not frame-by-frame
@@ -203,6 +203,8 @@ def process_video(
     pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
     
     frame_count = 0
+    chunk_count = 1
+
     cache.new_chunk(
         chunk_size,
         frames_per_clip_c3d, clip_num_c3d,
@@ -211,9 +213,12 @@ def process_video(
 
     ask_questions_thread = threading.Thread(
         target=ask_questions, args=(
-            args, questions, cache)
+            args, questions)
     )
     ask_questions_thread.start()
+
+    # Force roughly 30 FPS
+    starttime=time.time()
 
     print("Playing videos...")
     while True:
@@ -221,7 +226,7 @@ def process_video(
         if flag:
             pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
            
-            if frame_count % 4 == 0 and display_video:
+            if frame_count % 2 == 0 and display_video:
                 cv2.imshow('frame', frame)
 
             logging.debug("processing frame #" + str(pos_frame))
@@ -229,15 +234,15 @@ def process_video(
                 logging.debug(
                     "creating chunk #" + str(cache.current_chunk.id
                 ))
-               
-                create_chunk_thread = threading.Thread(
-                  target=_commit_current_chunk, args=(
-                    )
+                
+                get_features_thread = threading.Thread(
+                  target=_get_features, args=(
+                    [chunk_count])
                 )
-                create_chunk_thread.start()
+                get_features_thread.start()
                
                 frame_count = 0
-
+                print(cache.newest_id)
                 cache.new_chunk(
                     chunk_size,
                     frames_per_clip_c3d,
@@ -245,8 +250,12 @@ def process_video(
                     i3d_extractor_model_path
                 )
 
+                chunk_count += 1
+                time.sleep(100000)
             else:
-                cache.current_chunk.add_frame(frame, frame_count)
+                cache.db.get(chunk_count).add_frame(
+                    frame, frame_count
+                )
 
             frame_count += 1
         else:
@@ -254,6 +263,7 @@ def process_video(
             print("frame is not ready")
             cv2.waitKey(1000)
 
+        time.sleep(.25 - ((time.time() - starttime) % .25))
         if cv2.waitKey(10) == 27:
             break
         if cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT):
@@ -275,7 +285,9 @@ def kill_old_threads(cache):
         time.sleep(10)
 
 
-def ask_questions(args, questions, cache):
+def ask_questions(args, questions):
+    global cache
+
     question_count = 0
     time.sleep(10)
    
@@ -323,6 +335,8 @@ def ask_questions(args, questions, cache):
 
 
 def main():
+    global cache
+
     logging.basicConfig(filename='VQA.log',level=logging.DEBUG)
     args = parse_args()
 
@@ -354,7 +368,6 @@ def main():
     
     process_video(
         args.chunk_size,
-        cache,
         args.frames_per_clip_c3d,
         args.clip_num_c3d,
         args.i3d_extractor_model_path,

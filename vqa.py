@@ -22,8 +22,9 @@ class VQA:
     while cache.newest_id == 0:
         time.sleep(5)
 
-    for chunk_id in range(cache.oldest_id, cache.newest_id, -1):
-        self._predict(question, cache.db[chunk_id])
+    self._predict(question, cache.db[1])
+    #for chunk_id in range(cache.newest_id, cache.oldest_id, -1):
+    #    self._predict(question, cache.db[chunk_id])
 
   def _encode_question(self, question):
     """Map question to sequence of vocab id. 3999 for word not in vocab."""
@@ -43,6 +44,7 @@ class VQA:
   def _predict(self, question, chunk):
     question = self._encode_question(question)
 
+    self.model_config['frame_num'] = chunk.frame_num
     with tf.Graph().as_default():
       model = GRA(self.model_config, chunk.clip_num)
       model.pretrained_embedding = "VideoQA/" + model.pretrained_embedding
