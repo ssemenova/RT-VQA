@@ -46,7 +46,7 @@ def parse_args():
     )
     ## CACHE VARIABLES ##
     # Cache size (in terms of chunks)
-    parser.add_argument('--cache_size', type=int, default='100')
+    parser.add_argument('--cache_size', type=int, default='10')
     # How often to evict (in terms of chunks). A lower number 
     # (more frequent evictions) means the chunk creation and 
     # cache insertion process takes longer.
@@ -56,7 +56,7 @@ def parse_args():
 
     ## VIDEO PROCESSING VARIABLES ##
     # The size of a video chunk to cache
-    parser.add_argument('--chunk_size', type=int, default='10')
+    parser.add_argument('--chunk_size', type=int, default='50')
 
     ## C3D FEATURE EXTRACTION ##
     # Depending on how these variables are set, some video data
@@ -68,7 +68,7 @@ def parse_args():
     # Amount of clips to create per chunk. Can be <= chunk_size
     parser.add_argument('--clip_num_c3d', type=int, default='5')
     # Frames per clip. Can be <= chunk_size
-    parser.add_argument('--frames_per_clip_c3d', type=int, default='2')
+    parser.add_argument('--frames_per_clip_c3d', type=int, default='5')
 
     ## VIDEO QA VARIABLES ##
     # "Config_id" for VideoQA in config.py
@@ -174,8 +174,11 @@ def _open_video(video_name):
     return cap
 
 
-def _commit_current_chunk(cache):
-    return cache.commit()
+def _commit_current_chunk():
+    global cache
+    cache.commit()
+    logging.debug("in thread ")
+    logging.debug(cache.db)
 
 
 def process_video(
@@ -188,6 +191,8 @@ def process_video(
     display_video,
     args, questions # TODO - maybe don't pass these in here
 ):
+    global video_count
+
     # TODO: LATER-- replace this with something more real-time
     # and not frame-by-frame
     if interleaving:
@@ -210,7 +215,7 @@ def process_video(
     )
     ask_questions_thread.start()
 
-    print("playing videos")
+    print("Playing videos...")
     while True:
         flag, frame = cap.read()
         if flag:
@@ -221,19 +226,25 @@ def process_video(
 
             logging.debug("processing frame #" + str(pos_frame))
             if frame_count == chunk_size:
+                logging.debug(
+                    "creating chunk #" + str(cache.current_chunk.id
+                ))
+               
                 create_chunk_thread = threading.Thread(
                   target=_commit_current_chunk, args=(
-                      cache,
                     )
                 )
-
+                create_chunk_thread.start()
+               
                 frame_count = 0
 
                 cache.new_chunk(
-                    cache, chunk_size,
-                    frames_per_clip_c3d, clip_num_c3d,
+                    chunk_size,
+                    frames_per_clip_c3d,
+                    clip_num_c3d,
                     i3d_extractor_model_path
                 )
+
             else:
                 cache.current_chunk.add_frame(frame, frame_count)
 
@@ -267,8 +278,14 @@ def kill_old_threads(cache):
 def ask_questions(args, questions, cache):
     question_count = 0
     time.sleep(10)
+   
+    vqa_module = VQA(
+        args.videoqa_config,
+        args.videoqa_model_path,
+        args.videoqa_vocab_path,
+        args.clip_num_c3d
+    )
     
-    import pdb; pdb.set_trace()
     while True:
         # question = input("Enter a question \n")
         # sys.stdout.flush()
@@ -280,31 +297,29 @@ def ask_questions(args, questions, cache):
         # print("Chunks in cache = " + cache.size())
         
         # Ask questions about the past 5 videos for now
+        random.seed()
         random_video_index = random.randint(
             max(video_count - 5, 0), 
             max(video_count - 1, 0)
         )
-        random_question_index = random.randint(
-            0,
-            len(questions[random_video_index])
-        )
-        question = questions[random_video_index][random_question_index]
+        if len(questions[random_video_index]) != 0:
+            random_question_index = random.randint(
+                0,
+                len(questions[random_video_index]) - 1
+            )
+            question = questions[random_video_index][random_question_index]
+
+            questions[random_video_index].remove(question)
 
         # relevant_chunk = chunk_localization.predict(cache, question)
         
-        print("Asking question = " + str(question[0]))
-
-        vqa_module = VQA(
-           args.videoqa_config,
-           args.videoqa_model_path,
-           args.videoqa_vocab_path,
-           args.clip_num_c3d
-        )
-        answer = vqa_module.predict(question[0], cache)
+            print("Asking question = " + str(question[0]))
+            import pdb; pdb.set_trace()
+            answer = vqa_module.predict(question[0], cache)
         
 
-        question_count += 1
-        time.sleep(2)
+            question_count += 1
+            time.sleep(5)
 
 
 def main():

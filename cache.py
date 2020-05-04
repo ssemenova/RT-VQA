@@ -7,7 +7,7 @@ class Cache(object):
     self.cache_size = cache_size
     self.evict_mod = evict_mod
 
-    self.oldest_id = 0
+    self.oldest_id = 1
     self.newest_id = 0
 
     self.current_id = 1
@@ -36,42 +36,52 @@ class Cache(object):
   def _connect(self):
     return sqlite3.connect(db_name + '.db')
 
+  def commit(self):
+    self.current_chunk.generate_features()
+    self.newest_id = self.current_chunk.id
+
   def new_chunk(
     self, chunk_size, frames_per_clip_c3d, 
     clip_num_c3d, i3d_extractor_model_path
   ):
-    import pdb; pdb.set_trace()
     self.current_chunk = Chunk(
       self.current_id, chunk_size,
       frames_per_clip_c3d, clip_num_c3d,
-      i3d_extractor_model_path
+      i3d_extractor_model_path,
     )
+
+    self.db.update({
+        self.current_chunk.id: self.current_chunk
+    })
 
     self.current_id +=1
 
-  def commit(self):
-      self.current_chunk.generate_features()
-      self.insert(current_chunk)
-
-  def force_chunk(self):
-    self.current_chunk.commit()
+    # Loosely evict from the cache every [evict_mod] chunks
+    oldest_allowed_id = max(
+        1, self.current_chunk.id - self.cache_size
+    )
+    should_evict = oldest_allowed_id % self.evict_mod == 0
+    if should_evict:
+      self._evict(oldest_allowed_id)
+      self.oldest_id = oldest_allowed_id
 
   def size(self):
     return str(self.oldest_id - self.newest_id)
 
-  def insert(self, chunk):
+  # TODO: get rid of this method
+  def insert_latest_chunk(self):
     if self.use_ram:
       self.db.update({
-          chunk.id: chunk
+          self.current_chunk.id: self.current_chunk
       })
     else:
       # TODO: later, is self a valid way to insert vgg and c3d data?
       cursor = self.conn.cursor()
       cursor.execute(
         "INSERT INTO videochunks VALUES(" +
-        "'" + chunk.id + "', '" +
-        chunk.vgg_features + "', '" +
-        chunk.c3d_features + "'"
+        "'" + self.current_chunk.id + "', '" +
+        self.current_chunk.vgg_features + "', '" +
+        self.current_chunk.c3d_features + "'"
         + ")"
       )
       self.conn.commit()
@@ -79,7 +89,9 @@ class Cache(object):
     self.newest_id += 1
 
     # Loosely evict from the cache every [evict_mod] chunks
-    oldest_allowed_id = max(0, chunk.id - self.cache_size)
+    oldest_allowed_id = max(
+        1, self.current_chunk.id - self.cache_size
+    )
     should_evict = oldest_allowed_id % self.evict_mod == 0
     if should_evict:
       self._evict(oldest_allowed_id)
