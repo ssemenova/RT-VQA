@@ -1,4 +1,4 @@
-# VQA
+# Realtime Video QA
 
 ## Setup
 
